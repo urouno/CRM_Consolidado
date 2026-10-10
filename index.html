@@ -1,0 +1,1449 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Consola de recontacto · Real del Alba</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: barra fija · columna de leads + columna de llamada · una sola columna en teléfono */
+:root{
+  --bg:#f1f3ef; --surface:#ffffff; --surface-2:#e8ebe4; --sunk:#f7f8f5;
+  --ink:#171a18; --muted:#5e665f; --line:#d5d9d0;
+  --accent:#2e3c7c; --accent-soft:#e2e6f5; --accent-ink:#2e3c7c; --on-accent:#ffffff;
+  --ok:#1a6e45; --ok-soft:#dcefe4;
+  --warn:#8d5c05; --warn-soft:#f6ead1;
+  --bad:#9a2e23; --bad-soft:#f6e0dd;
+  --idle:#5f6a72; --idle-soft:#e6e9ea;
+  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",Roboto,sans-serif;
+  --r:10px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#14171a; --surface:#1c2023; --surface-2:#262b2f; --sunk:#191d20;
+  --ink:#e9ede9; --muted:#9ba49d; --line:#333a3e;
+  --accent:#9dabf3; --accent-soft:#242b47; --accent-ink:#b4bff7; --on-accent:#14171a;
+  --ok:#5cc08d; --ok-soft:#1d3a2c;
+  --warn:#dca847; --warn-soft:#3a2f16;
+  --bad:#e68176; --bad-soft:#3d241f;
+  --idle:#9aa5ab; --idle-soft:#2a3034;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#14171a; --surface:#1c2023; --surface-2:#262b2f; --sunk:#191d20;
+  --ink:#e9ede9; --muted:#9ba49d; --line:#333a3e;
+  --accent:#9dabf3; --accent-soft:#242b47; --accent-ink:#b4bff7; --on-accent:#14171a;
+  --ok:#5cc08d; --ok-soft:#1d3a2c;
+  --warn:#dca847; --warn-soft:#3a2f16;
+  --bad:#e68176; --bad-soft:#3d241f;
+  --idle:#9aa5ab; --idle-soft:#2a3034;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+h1,h2,h3,h4{font-family:var(--display);margin:0;text-wrap:balance}
+p{margin:0}
+img{max-width:100%}
+[hidden]{display:none !important}
+button{font:inherit;font-family:var(--body);cursor:pointer}
+input,select,textarea{font:inherit;font-family:var(--body);color:var(--ink);background:var(--surface);
+  border:1px solid var(--line);border-radius:8px;padding:.5rem .6rem;width:100%}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,
+summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+textarea{resize:vertical;min-height:60px}
+
+/* ---------- barra ---------- */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--surface);border-bottom:1px solid var(--line)}
+.bar-in{max-width:1320px;margin:0 auto;padding:.65rem 16px;display:flex;gap:.9rem;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.brand{display:flex;gap:.6rem;align-items:center;min-width:0}
+.brand .mark{width:30px;height:30px;border-radius:7px;background:var(--accent);color:var(--on-accent);
+  display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:12px;flex:0 0 auto}
+.brand h1{font-size:15.5px;font-weight:700;letter-spacing:-.01em;white-space:nowrap}
+.brand p{font-size:12px;color:var(--muted)}
+.bar-right{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+.who{display:flex;align-items:center;gap:.4rem;font-size:12px;color:var(--muted);white-space:nowrap}
+.who input{width:140px;padding:.33rem .5rem;font-size:13px}
+.conn{display:inline-flex;align-items:center;gap:.35rem;font-size:12px;color:var(--muted);white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--idle);flex:0 0 auto}
+.dot.on{background:var(--ok)} .dot.off{background:var(--bad)} .dot.wait{background:var(--warn)}
+
+.wrap{max-width:1320px;margin:0 auto;padding-inline:16px;padding-block:1rem 3rem;display:flex;flex-direction:column;gap:1rem}
+
+/* ---------- config ---------- */
+.cfg{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.cfg>summary{padding:.75rem 1rem;cursor:pointer;font-family:var(--display);font-weight:700;font-size:13px;
+  text-transform:uppercase;letter-spacing:.04em;list-style:none}
+.cfg>summary::-webkit-details-marker{display:none}
+.cfg>summary:after{content:"+";float:right;color:var(--muted);font-weight:500}
+.cfg[open]>summary:after{content:"\2013"}
+.cfg-body{padding:0 1rem 1rem;display:flex;flex-direction:column;gap:.7rem}
+
+/* ---------- rejilla ---------- */
+.cols{display:grid;grid-template-columns:320px minmax(0,1fr);gap:1rem;align-items:start}
+@media(max-width:1000px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);min-width:0}
+.panel>header{padding:.75rem 1rem;border-bottom:1px solid var(--line);display:flex;align-items:center;
+  justify-content:space-between;gap:.5rem;flex-wrap:wrap}
+.panel>header h2{font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.panel>header .sub{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* ---------- lista de leads ---------- */
+.tools{padding:.7rem 1rem;display:flex;flex-direction:column;gap:.5rem;border-bottom:1px solid var(--line)}
+.segs{display:flex;gap:.3rem;flex-wrap:wrap}
+.seg{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:.28rem .62rem;font-size:12.5px;color:var(--ink)}
+.seg[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.lista{display:flex;flex-direction:column;max-height:min(68vh,620px);overflow-y:auto}
+.lrow{border-bottom:1px solid var(--line);padding:.6rem 1rem;display:flex;flex-direction:column;gap:.25rem;
+  background:none;border-left:0;border-right:0;border-top:0;text-align:left;color:var(--ink);width:100%}
+.lrow:last-child{border-bottom:0}
+.lrow:hover{background:var(--sunk)}
+.lrow[aria-current="true"]{background:var(--accent-soft)}
+.lrow .t{display:flex;gap:.5rem;align-items:center;justify-content:space-between}
+.lrow .nm{font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.lrow .mt{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ---------- etapas ---------- */
+.etapa{border-bottom:1px solid var(--line)}
+.etapa:last-of-type{border-bottom:0}
+.eh{display:flex;gap:.65rem;align-items:center;width:100%;background:none;border:0;padding:.75rem 1rem;text-align:left;color:var(--ink)}
+.eh .n{flex:0 0 23px;height:23px;border-radius:50%;display:grid;place-items:center;
+  font-family:var(--display);font-weight:700;font-size:11.5px;background:var(--surface-2);color:var(--muted)}
+.etapa[data-state="activa"] .eh .n{background:var(--accent);color:var(--on-accent)}
+.etapa[data-state="hecha"] .eh .n{background:var(--ok-soft);color:var(--ok)}
+.etapa[data-state="omitida"] .eh .n{background:var(--idle-soft);color:var(--idle)}
+.eh h3{font-size:14px;font-weight:600}
+.eh .hint{font-size:11.5px;color:var(--muted);margin-left:auto;text-align:right;max-width:46%}
+.etapa[data-state="pendiente"] .eh{opacity:.5}
+.eb{padding:0 1rem 1.05rem;display:flex;flex-direction:column;gap:.85rem}
+
+.say{background:var(--sunk);border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:0 8px 8px 0;padding:.7rem .85rem;font-size:14.5px;line-height:1.55}
+.say .tag{display:block;font-family:var(--display);font-size:10px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:.35rem}
+.say b{background:var(--accent-soft);color:var(--accent-ink);padding:0 .18em;border-radius:3px;font-weight:600}
+.say .alt{display:block;margin-top:.5rem;padding-top:.5rem;border-top:1px dashed var(--line);font-size:13.5px;color:var(--muted)}
+
+.q{display:flex;flex-direction:column;gap:.45rem}
+.q>.ask{font-size:14px}
+.q>.ask:before{content:"\201C"} .q>.ask:after{content:"\201D"}
+label.lb{font-size:12.5px;font-weight:600;color:var(--muted)}
+.fld{display:flex;flex-direction:column;gap:.3rem;min-width:0}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:.55rem}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.55rem}
+@media(max-width:560px){.g2,.g3{grid-template-columns:1fr}}
+
+.opts{display:flex;gap:.35rem;flex-wrap:wrap}
+.opt{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:.34rem .72rem;font-size:13px;color:var(--ink)}
+.opt[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.opt.danger[aria-pressed="true"]{background:var(--bad);border-color:var(--bad);color:#fff}
+.opt.soft[aria-pressed="true"]{background:var(--warn);border-color:var(--warn);color:#fff}
+.chips{display:flex;gap:.3rem;flex-wrap:wrap}
+.chip{background:var(--surface-2);border:1px solid transparent;border-radius:999px;padding:.24rem .58rem;font-size:12px;color:var(--muted)}
+.chip:hover{color:var(--ink);border-color:var(--line)}
+.chip[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent-ink);border-color:var(--accent)}
+
+.btn{background:var(--accent);color:var(--on-accent);border:1px solid var(--accent);border-radius:8px;
+  padding:.52rem .92rem;font-weight:600;font-size:14px}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line);font-weight:500}
+.btn.sm{padding:.32rem .62rem;font-size:12.5px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:.45rem;flex-wrap:wrap;align-items:center}
+
+.out{background:var(--sunk);border:1px dashed var(--line);border-radius:8px;padding:.7rem .8rem;
+  font-size:13.5px;white-space:pre-wrap;word-break:break-word;line-height:1.5}
+.nota{font-size:12px;color:var(--muted)}
+.aviso{font-size:12.5px;color:var(--warn);background:var(--warn-soft);border-radius:8px;padding:.5rem .65rem}
+
+.badge{display:inline-flex;align-items:center;gap:.3rem;border-radius:999px;padding:.14rem .55rem;
+  font-size:11.5px;font-weight:600;font-family:var(--display);white-space:nowrap}
+.badge:before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.b-verde{background:var(--ok-soft);color:var(--ok)}
+.b-amarillo{background:var(--warn-soft);color:var(--warn)}
+.b-rojo{background:var(--bad-soft);color:var(--bad)}
+.b-sincontacto{background:var(--idle-soft);color:var(--idle)}
+
+.veredicto{display:flex;gap:.65rem;align-items:flex-start;background:var(--sunk);border:1px solid var(--line);
+  border-radius:8px;padding:.7rem .8rem}
+.veredicto p{font-size:13px;color:var(--muted)}
+
+/* ---------- antecedentes ---------- */
+.ante{padding:.75rem 1rem;display:flex;flex-direction:column;gap:.55rem;border-bottom:1px solid var(--line)}
+.kv{display:flex;flex-wrap:wrap;gap:.3rem .9rem;font-size:12.5px;color:var(--muted)}
+.kv b{color:var(--ink);font-weight:600}
+.hist{background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:.6rem .7rem;
+  font-size:13px;white-space:pre-wrap;max-height:190px;overflow-y:auto;line-height:1.5}
+
+/* ---------- ficha ---------- */
+.ficha{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;padding:0 1rem 1rem}
+@media(max-width:760px){.ficha{grid-template-columns:1fr}}
+.bloque{border:1px solid var(--line);border-radius:8px;padding:.7rem .8rem;background:var(--sunk);min-width:0}
+.bloque h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.45rem}
+.bloque dl{margin:0;display:flex;flex-direction:column;gap:.28rem}
+.bloque .f{display:flex;gap:.5rem;font-size:13px;align-items:baseline}
+.bloque .f dt{flex:0 0 42%;color:var(--muted);font-size:12.5px}
+.bloque .f dd{margin:0;flex:1 1 auto;min-width:0;word-break:break-word}
+.bloque .f.vacio dd{color:var(--muted);font-style:italic}
+.bloque .f.pend dd{color:var(--warn)}
+.leyenda{display:flex;gap:.8rem;flex-wrap:wrap;font-size:11.5px;color:var(--muted);padding:0 1rem .9rem}
+.leyenda i{font-style:italic}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(1.1rem + env(safe-area-inset-bottom,0px));
+  background:var(--ink);color:var(--bg);padding:.5rem .9rem;border-radius:999px;font-size:13px;z-index:60;
+  box-shadow:0 6px 18px rgba(0,0,0,.2);max-width:calc(100vw - 32px);text-align:center}
+.toast.err{background:var(--bad);color:#fff}
+@media (prefers-reduced-motion:no-preference){.toast{animation:pop .2s ease}}
+@keyframes pop{from{opacity:0;transform:translate(-50%,6px)}}
+
+.vacio-estado{padding:2rem 1.2rem;text-align:center;color:var(--muted);display:flex;flex-direction:column;gap:.4rem;align-items:center}
+.vacio-estado strong{font-family:var(--display);font-size:15px;color:var(--ink);font-weight:700}
+.vacio-estado p{font-size:13px;max-width:36ch}
+.cargando{padding:1.3rem;text-align:center;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="bar-in">
+    <div class="brand">
+      <div class="mark">RA</div>
+      <div><h1>Consola de recontacto</h1><p>Real del Alba · Villagrán</p></div>
+    </div>
+    <div class="bar-right">
+      <label class="who">Llama <input id="quien" placeholder="tu nombre" autocomplete="off"></label>
+      <span class="conn"><span class="dot" id="dot"></span><span id="conn-txt">Sin conectar</span></span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <details class="cfg" id="cfg">
+    <summary>Conexión con Google Sheets</summary>
+    <div class="cfg-body">
+      <div class="fld">
+        <label class="lb" for="cfg-url">URL de la aplicación web de Apps Script</label>
+        <input id="cfg-url" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off" spellcheck="false">
+        <p class="nota">Se guarda en este navegador. Despliega el script como aplicación web, ejecutándose como tú y con acceso para cualquier usuario, y pega aquí la URL que termina en <code>/exec</code>.</p>
+      </div>
+      <div class="row">
+        <button class="btn sm" id="cfg-probar">Probar conexión</button>
+        <button class="btn sm ghost" id="cfg-guardar">Guardar</button>
+        <span class="nota" id="cfg-estado"></span>
+      </div>
+    </div>
+  </details>
+
+  <div class="cols">
+
+    <!-- ================= COLUMNA DE LEADS ================= -->
+    <section class="panel">
+      <header><h2>Leads</h2><span class="sub" id="leads-sub"></span></header>
+      <div class="tools">
+        <input id="buscar" placeholder="Buscar por nombre, teléfono o ID" autocomplete="off">
+        <div class="segs" id="segs">
+          <button class="seg" data-anio="" aria-pressed="true">Todos</button>
+          <button class="seg" data-anio="2022">2022</button>
+          <button class="seg" data-anio="2023">2023</button>
+          <button class="seg" data-anio="2024">2024</button>
+          <button class="seg" data-anio="2025">2025</button>
+        </div>
+        <div class="row">
+          <button class="btn sm ghost" id="recargar">Cargar cola de recontacto</button>
+        </div>
+      </div>
+      <div class="lista" id="lista">
+        <div class="vacio-estado">
+          <strong>Conecta la hoja para empezar</strong>
+          <p>Pega la URL del script arriba y carga la cola. Verás primero los leads más antiguos, que son los que nadie ha vuelto a tocar.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= COLUMNA DE LLAMADA ================= -->
+    <section class="panel" id="panel-llamada">
+      <header>
+        <h2>Llamada</h2>
+        <span class="sub" id="llamada-sub">Selecciona un lead</span>
+      </header>
+
+      <!-- Antecedentes -->
+      <div class="ante" id="ante" hidden>
+        <div class="kv" id="ante-kv"></div>
+        <div class="fld">
+          <label class="lb">Antecedentes en el CRM</label>
+          <div class="hist" id="ante-hist"></div>
+        </div>
+        <div class="aviso" id="ante-aviso" hidden></div>
+      </div>
+
+      <!-- ETAPA 1 · Apertura -->
+      <div class="etapa" data-etapa="1" data-state="pendiente">
+        <button class="eh" data-abrir="1"><span class="n">1</span><h3>Apertura y permiso para platicar</h3><span class="hint" id="hint1"></span></button>
+        <div class="eb" id="eb1" hidden>
+          <div class="say" id="say-apertura"><span class="tag">Lo que dices</span></div>
+          <div class="q">
+            <label class="lb">¿Qué pasó al marcar?</label>
+            <div class="opts" data-campo="resultado">
+              <button class="opt" data-val="contactado">Contestó y puede platicar</button>
+              <button class="opt soft" data-val="reagendar">Contestó, pero no puede ahora</button>
+              <button class="opt" data-val="no_contesto">No contestó</button>
+              <button class="opt danger" data-val="equivocado">Número equivocado</button>
+            </div>
+          </div>
+
+          <div id="caja-reagendar" hidden>
+            <div class="say"><span class="tag">Lo que dices</span>Claro, no se preocupe. <b>¿Qué día y a qué hora le quedaría mejor que le marque?</b></div>
+            <div class="g2">
+              <div class="fld"><label class="lb" for="f-reag-fecha">Día acordado</label><input id="f-reag-fecha" type="date"></div>
+              <div class="fld"><label class="lb" for="f-reag-hora">Hora</label><input id="f-reag-hora" type="time"></div>
+            </div>
+            <p class="nota">Con esto basta. No sigas con las demás preguntas: guarda y pasa al siguiente lead.</p>
+          </div>
+
+          <div id="caja-nocontesto" hidden>
+            <p class="nota">Registra el intento y sigue. Si quieres dejar un mensaje, aquí está el texto.</p>
+            <div class="out" id="msg-intento"></div>
+            <div class="row"><button class="btn sm" data-copiar="msg-intento">Copiar mensaje</button></div>
+          </div>
+
+          <div class="row" id="row-ir-2" hidden><button class="btn" data-ir="2">Continuar</button></div>
+        </div>
+      </div>
+
+      <!-- ETAPA 2 · Situación actual -->
+      <div class="etapa" data-etapa="2" data-state="pendiente">
+        <button class="eh" data-abrir="2"><span class="n">2</span><h3>Situación actual</h3><span class="hint">¿Compró o sigue buscando?</span></button>
+        <div class="eb" id="eb2" hidden>
+          <div class="q">
+            <span class="ask">Para empezar, desde aquella vez, ¿logró comprar casa o todavía sigue buscando?</span>
+            <div class="opts" data-campo="situacion">
+              <button class="opt" data-val="sigue_buscando">Todavía no compra</button>
+              <button class="opt danger" data-val="ya_compro">Ya compró casa</button>
+            </div>
+          </div>
+
+          <div id="caja-compro" hidden>
+            <div class="say"><span class="tag">Lo que dices</span>Qué bueno, felicidades. Gracias por decírmelo. <b>¿Le parece bien que cierre su seguimiento para no volver a molestarle con este tema?</b></div>
+            <div class="opts" data-campo="cerrarSeguimiento">
+              <button class="opt" data-val="si">Sí, cerrar seguimiento</button>
+              <button class="opt" data-val="no">Prefiere que lo dejemos abierto</button>
+            </div>
+            <p class="nota">Aquí termina la llamada. No hay nada que calificar ni que ofrecer.</p>
+          </div>
+
+          <div id="caja-nocompro" hidden>
+            <div class="say"><span class="tag">Lo que dices</span>Entiendo. Le pregunto porque, desde la última vez que nos contactó, su situación laboral y de crédito pudo haber cambiado. Si sigue interesado, <b>podemos orientarle para revisar sus opciones actuales con Infonavit</b>, sin dar por hecho que ya califica.</div>
+            <div class="q">
+              <label class="lb">Si viene al caso: ¿actualmente trabaja y le descuentan IMSS? <span class="nota">(opcional, no condiciona nada)</span></label>
+              <div class="opts" data-campo="cotiza">
+                <button class="opt" data-val="si">Sí cotiza</button>
+                <button class="opt" data-val="nose">No sabe</button>
+                <button class="opt soft" data-val="no">No cotiza</button>
+              </div>
+              <p class="nota" id="nota-cotiza"></p>
+            </div>
+            <div class="row"><button class="btn" data-ir="3">Continuar</button><button class="btn ghost" data-omitir="3">Omitir el motivo histórico</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ETAPA 3 · Por qué no compró antes -->
+      <div class="etapa" data-etapa="3" data-state="pendiente">
+        <button class="eh" data-abrir="3"><span class="n">3</span><h3>Por qué no avanzó entonces</h3><span class="hint">La etapa que más sirve</span></button>
+        <div class="eb" id="eb3" hidden>
+          <div class="q">
+            <span class="ask">Recuerdo que en aquel entonces no se concretó la compra. Para entender mejor su situación, ¿qué fue lo que hizo que ya no avanzara en ese momento?</span>
+            <p class="nota">Déjalo hablar. No interrumpas para proponer nada.</p>
+          </div>
+          <div class="fld">
+            <label class="lb">Categoría de lo que dijo</label>
+            <div class="chips" id="chips-motivo"></div>
+          </div>
+          <div class="fld">
+            <label class="lb" for="f-motivo">Con sus palabras</label>
+            <textarea id="f-motivo" placeholder="Lo que contestó, tal como lo dijo…"></textarea>
+          </div>
+          <div class="say" id="say-espejo" hidden><span class="tag">Confirma lo que entendiste</span></div>
+          <div class="say" id="say-seguimiento" hidden><span class="tag">Pregunta de seguimiento sugerida</span></div>
+          <div class="q">
+            <span class="ask">¿Y actualmente sigue siendo el mismo inconveniente o ha cambiado algo desde entonces?</span>
+            <div class="opts" data-campo="motivoVigente">
+              <button class="opt soft" data-val="sigue">Sigue igual</button>
+              <button class="opt" data-val="cambio">Ya cambió</button>
+            </div>
+          </div>
+          <div class="row"><button class="btn" data-ir="4">Continuar</button></div>
+        </div>
+      </div>
+
+      <!-- ETAPA 4 · Intención actual -->
+      <div class="etapa" data-etapa="4" data-state="pendiente">
+        <button class="eh" data-abrir="4"><span class="n">4</span><h3>Intención de compra hoy</h3><span class="hint">Define la clasificación</span></button>
+        <div class="eb" id="eb4" hidden>
+          <div class="q">
+            <span class="ask">Hoy en día, ¿sigue teniendo la intención de comprar casa, le gustaría hacerlo más adelante o por ahora ya no está dentro de sus planes?</span>
+            <div class="opts" data-campo="intencion">
+              <button class="opt" data-val="sigue">Sigue buscando</button>
+              <button class="opt soft" data-val="despues">Más adelante</button>
+              <button class="opt danger" data-val="no">Ya no está en sus planes</button>
+            </div>
+          </div>
+
+          <div id="caja-sigue" hidden>
+            <div class="q">
+              <span class="ask">¿Y qué es lo que necesita resolver para poder avanzar?</span>
+              <div class="chips" id="chips-resolver"></div>
+              <textarea id="f-resolver" placeholder="El monto que podría financiar, el precio, la ubicación, otro factor…"></textarea>
+            </div>
+            <div class="row"><button class="btn" data-ir="5">Continuar a necesidades</button><button class="btn ghost" data-ir="6">Ir directo al asesor</button></div>
+          </div>
+
+          <div id="caja-despues" hidden>
+            <div class="q">
+              <span class="ask">¿Tiene idea de para cuándo retomaría la búsqueda?</span>
+              <input id="f-plazo" placeholder="En tres meses, a fin de año, cuando junte el enganche…" autocomplete="off">
+            </div>
+            <div class="g2">
+              <div class="fld"><label class="lb" for="f-prox-accion">Próxima acción acordada</label><input id="f-prox-accion" placeholder="Volver a marcar, mandar información…" autocomplete="off"></div>
+              <div class="fld"><label class="lb" for="f-prox-fecha">Fecha de seguimiento</label><input id="f-prox-fecha" type="date"></div>
+            </div>
+            <p class="nota">Registra la fecha solo si hubo un acuerdo concreto. Si no lo hubo, déjala vacía: es más honesto y evita una llamada muerta.</p>
+            <div class="row"><button class="btn ghost" data-ir="6">Aun así proponer al asesor</button></div>
+          </div>
+
+          <div id="caja-nointeres" hidden>
+            <div class="say"><span class="tag">Lo que dices</span>Entiendo perfectamente, le agradezco mucho que me lo diga. <b>¿Prefiere que ya no le volvamos a contactar sobre esto?</b></div>
+            <div class="opts" data-campo="noContactar">
+              <button class="opt danger" data-val="si">Pidió no ser contactado</button>
+              <button class="opt" data-val="no">No le molesta que le hablemos después</button>
+            </div>
+            <p class="nota">Aquí se cierra. No sigas con necesidades, vivienda ni crédito.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ETAPA 5 · Necesidades -->
+      <div class="etapa" data-etapa="5" data-state="pendiente">
+        <button class="eh" data-abrir="5"><span class="n">5</span><h3>Necesidades actuales</h3><span class="hint">Opcional, lo que salga natural</span></button>
+        <div class="eb" id="eb5" hidden>
+          <p class="nota">Ninguna de estas es obligatoria. Pregunta solo lo que encaje en la conversación.</p>
+          <div class="q">
+            <span class="ask">¿Ahorita está rentando, vive con familiares o ya tiene otra casa?</span>
+            <div class="opts" data-campo="vivienda">
+              <button class="opt" data-val="renta">Renta</button>
+              <button class="opt" data-val="familiares">Con familiares</button>
+              <button class="opt" data-val="propia">Casa propia</button>
+              <button class="opt" data-val="otro">Otro</button>
+            </div>
+          </div>
+          <div class="q">
+            <span class="ask">¿Qué tendría que tener una casa para que le resultara conveniente? ¿Alguna zona en particular?</span>
+            <textarea id="f-necesidades" placeholder="Zona, tamaño, recámaras, condiciones…"></textarea>
+          </div>
+          <div class="row"><button class="btn" data-ir="6">Continuar</button><button class="btn ghost" data-omitir="6">No preguntar esto</button></div>
+        </div>
+      </div>
+
+      <!-- ETAPA 6 · Siguiente paso con el asesor -->
+      <div class="etapa" data-etapa="6" data-state="pendiente">
+        <button class="eh" data-abrir="6"><span class="n">6</span><h3>Siguiente paso con el asesor</h3><span class="hint">Cerrar con día y hora</span></button>
+        <div class="eb" id="eb6" hidden>
+          <div class="say" id="say-cierre"><span class="tag">Lo que dices</span></div>
+          <div class="q">
+            <label class="lb">¿Aceptó la llamada con el asesor?</label>
+            <div class="opts" data-campo="aceptaCita">
+              <button class="opt" data-val="si">Sí, agendamos</button>
+              <button class="opt soft" data-val="no">No quiso agendar</button>
+            </div>
+          </div>
+
+          <div id="caja-cita" hidden>
+            <div class="g2">
+              <div class="fld"><label class="lb" for="f-alt1">Opción de horario 1</label><input id="f-alt1" placeholder="mañana a las 11" autocomplete="off"></div>
+              <div class="fld"><label class="lb" for="f-alt2">Opción de horario 2</label><input id="f-alt2" placeholder="mañana a las 6 de la tarde" autocomplete="off"></div>
+            </div>
+            <div class="g3">
+              <div class="fld"><label class="lb" for="f-cita-fecha">Fecha confirmada</label><input id="f-cita-fecha" type="date"></div>
+              <div class="fld"><label class="lb" for="f-cita-hora">Hora confirmada</label><input id="f-cita-hora" type="time"></div>
+              <div class="fld"><label class="lb" for="f-asesor">Asesor responsable</label><input id="f-asesor" list="dl-asesores" autocomplete="off"><datalist id="dl-asesores"></datalist></div>
+            </div>
+            <div class="q">
+              <span class="ask">¿Este mismo número tiene WhatsApp? ¿Le puedo mandar la confirmación por ahí?</span>
+              <div class="opts" data-campo="whatsappOk">
+                <button class="opt" data-val="si">Sí, autorizó</button>
+                <button class="opt" data-val="no">No, mejor no</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="caja-sincita" hidden>
+            <p class="nota">No quiso cita y eso no lo convierte en lead perdido. Define qué conviene hacer, o cierra la conversación si él la cerró.</p>
+            <div class="g2">
+              <div class="fld"><label class="lb" for="f-prox-accion2">Próxima acción</label><input id="f-prox-accion2" placeholder="Mandar información, volver a marcar…" autocomplete="off"></div>
+              <div class="fld"><label class="lb" for="f-prox-fecha2">Fecha</label><input id="f-prox-fecha2" type="date"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bloque auxiliar · crédito -->
+      <details class="etapa" id="aux-credito">
+        <summary class="eh" style="cursor:pointer;list-style:none"><span class="n">+</span><h3>Cómo explicarle que revise su precalificación</h3><span class="hint">Bloque de apoyo</span></summary>
+        <div class="eb">
+          <div class="say"><span class="tag">Lo que dices</span>Para saber de cuánto dispone hoy, usted mismo lo puede consultar en <b>Mi Cuenta Infonavit</b>, en la página del Infonavit, con su número de seguro social. Si prefiere, mi compañero le explica paso a paso cómo entrar y qué revisar.</div>
+          <p class="nota">No pidas contraseñas, códigos de verificación, NSS ni CURP en esta primera llamada. Si después hace falta algún dato, se recaba por el procedimiento de la empresa.</p>
+          <p class="nota">No prometas montos ni des por hecho que califica. La llamada es de seguimiento, no una evaluación de crédito.</p>
+        </div>
+      </details>
+
+      <!-- Cierre -->
+      <div class="etapa" style="border-top:1px solid var(--line)">
+        <div class="eb" style="padding-top:1rem">
+          <div class="veredicto"><span class="badge b-sincontacto" id="clas-badge">Sin clasificar</span><p id="clas-texto">Abre un lead y registra la llamada. La clasificación sale de su intención actual y del siguiente paso acordado, no de los datos que te dé.</p></div>
+
+          <div class="fld" id="caja-wa" hidden>
+            <label class="lb">Mensaje de WhatsApp (solo si autorizó)</label>
+            <div class="out" id="msg-wa"></div>
+            <div class="row"><button class="btn sm" data-copiar="msg-wa">Copiar mensaje</button></div>
+          </div>
+
+          <div class="fld">
+            <label class="lb" for="f-resumen">Resumen de la conversación para el asesor</label>
+            <textarea id="f-resumen" placeholder="Dos o tres líneas: qué quiere, qué lo detuvo y qué se acordó."></textarea>
+            <div class="row"><button class="btn sm ghost" id="btn-sugerir">Sugerir resumen con lo capturado</button></div>
+          </div>
+
+          <div class="row">
+            <button class="btn" id="btn-guardar" disabled>Guardar llamada en la hoja</button>
+            <button class="btn ghost" id="btn-limpiar">Descartar y limpiar</button>
+            <span class="nota" id="estado-guardado"></span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= FICHA ================= -->
+  <section class="panel">
+    <header>
+      <h2>Ficha para el asesor</h2>
+      <div class="row"><button class="btn sm" data-copiar="ficha-texto">Copiar ficha</button></div>
+    </header>
+    <div class="ficha" id="ficha"></div>
+    <div class="leyenda">
+      <span>Confirmado: dato obtenido en la llamada</span>
+      <span style="color:var(--warn)">Por verificar: queda pendiente</span>
+      <span><i>No se preguntó</i>: no se tocó el tema</span>
+    </div>
+    <div class="eb" style="padding-bottom:1.1rem"><div class="out" id="ficha-texto"></div></div>
+  </section>
+</main>
+
+<script>
+/* =====================================================================
+   Lógica pura: guiones, clasificación, ficha y mensajes.
+   Se expone en window.RDA para poder probarla sin navegador.
+   ===================================================================== */
+(function (raiz) {
+  "use strict";
+
+  var DIAS  = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  var MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+  var MOTIVOS = [
+    { cat:'Puntos o crédito insuficiente', seg:'¿Hoy sigue siendo esa su principal preocupación?' },
+    { cat:'Acababa de entrar a trabajar',  seg:'¿Actualmente lleva más tiempo trabajando y cotizando?' },
+    { cat:'No le gustó la zona',           seg:'¿Qué zona o ubicación estaría buscando ahora?' },
+    { cat:'Lo vio caro',                   seg:'¿Cambió su presupuesto o qué precio tendría más sentido para usted?' },
+    { cat:'Su pareja no quiso',            seg:'¿Siguen considerando comprar juntos o sus planes cambiaron?' },
+    { cat:'Nadie le dio seguimiento',      seg:'Entiendo. ¿Qué información le hizo falta para poder tomar una decisión?' },
+    { cat:'Problemas con documentos',      seg:'¿Ese tema sigue pendiente o ya pudo resolverlo?' },
+    { cat:'No recuerda haber pedido informes', seg:'No se preocupe, pudo haber sido hace tiempo. ¿Le parece bien que le explique brevemente de qué se trata y usted me dice si le interesa?' }
+  ];
+
+  var RESOLVER = ['Saber de cuánto es su crédito','El precio de la vivienda','La ubicación','Ponerse de acuerdo en pareja','Juntar el enganche','Resolver documentos'];
+
+  function limpio(v) { return (v === null || v === undefined) ? '' : String(v).trim(); }
+  function esc(s) {
+    return limpio(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  /** Primer nombre, para que el guion no suene a lista de telemarketing. */
+  function nombreCorto(n) {
+    var p = limpio(n).split(/\s+/).filter(Boolean);
+    if (!p.length) return '';
+    return p.slice(0, 2).join(' ');
+  }
+  function fechaLarga(iso, hora) {
+    var m = limpio(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return '';
+    var d = new Date(+m[1], +m[2] - 1, +m[3]);
+    var t = DIAS[d.getDay()] + ' ' + d.getDate() + ' de ' + MESES[d.getMonth()];
+    if (hora) t += ' a las ' + hora12(hora);
+    return t;
+  }
+  function hora12(h) {
+    var m = limpio(h).match(/^(\d{1,2}):(\d{2})/);
+    if (!m) return limpio(h);
+    var hh = +m[1], mm = m[2];
+    var suf = hh < 12 ? 'de la mañana' : (hh < 19 ? 'de la tarde' : 'de la noche');
+    var h12 = hh % 12; if (h12 === 0) h12 = 12;
+    return h12 + (mm !== '00' ? ':' + mm : '') + ' ' + suf;
+  }
+
+  /* ---------------- Etapa 1 · guion de apertura adaptativo ---------------- */
+  function guionApertura(s) {
+    var n = nombreCorto(s.nombre);
+    var quien = limpio(s.quien);
+    var anio = limpio(s.anio);
+
+    var saludo = n
+      ? 'Buenas tardes, ¿hablo con <b>' + esc(n) + '</b>?'
+      : 'Buenas tardes, ¿con quién tengo el gusto?';
+
+    var presenta = 'Qué tal, soy ' + (quien ? '<b>' + esc(quien) + '</b>' : '<b>[di tu nombre]</b>') +
+      ', le llamo de Real del Alba, el fraccionamiento que tenemos en Villagrán.';
+
+    var motivo = anio
+      ? 'Le contacto porque hace tiempo, en <b>' + esc(anio) + '</b>, nos pidió información sobre nuestras viviendas y estamos retomando el seguimiento de las personas que en ese momento estaban considerando comprar casa.'
+      : 'Le contacto porque hace tiempo nos pidió información sobre nuestras viviendas y estamos retomando el seguimiento de las personas que en ese momento estaban considerando comprar casa.';
+
+    var pide = 'Quería preguntarle si todavía está buscando vivienda o si ya encontró alguna opción. <b>¿Tiene un par de minutos para platicar?</b>';
+
+    return {
+      html: saludo + ' ' + presenta + ' ' + motivo + ' ' + pide,
+      alterno: n ? '' : 'Si da su nombre, anótalo arriba y el resto del guion se ajusta solo.'
+    };
+  }
+
+  /* ---------------- Etapa 6 · guion de cierre ---------------- */
+  function guionCierre(s) {
+    var asesor = limpio(s.asesor);
+    var quien = asesor ? '<b>' + esc(asesor) + '</b>' : 'mi compañero';
+    var abre = (s.motivoVigente === 'cambio')
+      ? 'Por lo que me comenta, su situación ya cambió desde entonces, así que creo que valdría la pena revisarla antes de descartar la posibilidad de comprar.'
+      : 'Por lo que me comenta, creo que valdría la pena revisar su situación actual antes de descartar la posibilidad de comprar.';
+    return abre + ' Yo me encargo de este primer seguimiento y ' + quien +
+      ' puede orientarle sobre los pasos para revisar su precalificación y las viviendas de Real del Alba que podrían ajustarse a sus posibilidades. ' +
+      '<b>¿Le parece bien que le programe una llamada con él?</b>';
+  }
+
+  /* ---------------- Clasificación comercial ---------------- */
+  function citaCompleta(s) {
+    return !!(limpio(s.citaFecha) && limpio(s.citaHora) && limpio(s.asesor));
+  }
+  function pasoConcreto(s) {
+    return !!(limpio(s.proximaAccion) && limpio(s.proximaFecha));
+  }
+  function clasificar(s) {
+    if (s.resultado === 'equivocado') return 'rojo';
+    if (s.noContactar === 'si') return 'rojo';
+    if (s.situacion === 'ya_compro') return 'rojo';
+    if (s.intencion === 'no') return 'rojo';
+    if (!s.resultado || s.resultado === 'no_contesto' || s.resultado === 'reagendar') return 'sincontacto';
+    if (!s.intencion) return 'sincontacto';
+    if (s.intencion === 'sigue' && (citaCompleta(s) || pasoConcreto(s))) return 'verde';
+    return 'amarillo';
+  }
+  var TEXTO_CLAS = {
+    verde: 'Oportunidad activa. Sigue interesado y hay un siguiente paso con día y hora. Pásalo al asesor hoy mismo.',
+    amarillo: 'Interés posible, sin avance todavía. Queda contigo: registra el pendiente y una fecha de seguimiento cuando haya acuerdo real.',
+    rojo: 'Sin oportunidad comercial hoy. Se actualiza el registro y se respeta su decisión.',
+    sincontacto: 'Todavía no hay con qué clasificarlo. Falta confirmar su intención actual.'
+  };
+  var ETIQ_CLAS = { verde:'Verde · oportunidad activa', amarillo:'Amarillo · interés posible', rojo:'Rojo · sin oportunidad', sincontacto:'Sin contacto efectivo' };
+
+  function razonClasificacion(s) {
+    var c = clasificar(s);
+    if (c === 'amarillo') {
+      if (s.intencion === 'sigue' && !citaCompleta(s) && !pasoConcreto(s)) {
+        return 'Sigue interesado pero no hay cita confirmada ni fecha de seguimiento. En cuanto captures día, hora y asesor, pasa a verde.';
+      }
+      if (s.intencion === 'despues') {
+        return 'Lo considera más adelante.' + (limpio(s.proximaFecha) ? ' Ya tiene fecha de seguimiento.' : ' Acuerda una fecha de seguimiento si él la propone.');
+      }
+    }
+    return TEXTO_CLAS[c];
+  }
+
+  /* ---------------- Mensaje de WhatsApp ---------------- */
+  function msgWhatsApp(s) {
+    if (s.whatsappOk !== 'si') return '';
+    var n = nombreCorto(s.nombre);
+    var cuando = fechaLarga(s.citaFecha, s.citaHora);
+    var asesor = limpio(s.asesor);
+    var quien = limpio(s.quien);
+
+    var l = [];
+    l.push('Hola' + (n ? ', ' + n : '') + '. Muchas gracias por tomar mi llamada.');
+    l.push('');
+    if (cuando && asesor) {
+      l.push('Como quedamos, el ' + cuando + ' te marcará mi compañero ' + asesor +
+        ', de Real del Alba, para orientarte sobre cómo revisar tu situación actual con Infonavit y conocer las opciones de vivienda que podrían ajustarse a tus necesidades.');
+    } else if (cuando) {
+      l.push('Como quedamos, el ' + cuando + ' te marcará un compañero de Real del Alba, para orientarte sobre cómo revisar tu situación actual con Infonavit y conocer las opciones de vivienda que podrían ajustarse a tus necesidades.');
+    } else if (asesor) {
+      l.push('Como quedamos, te marcará mi compañero ' + asesor +
+        ', de Real del Alba, para orientarte sobre cómo revisar tu situación actual con Infonavit y conocer las opciones de vivienda que podrían ajustarse a tus necesidades.');
+    } else {
+      l.push('Como quedamos, un compañero de Real del Alba te va a marcar para orientarte sobre cómo revisar tu situación actual con Infonavit y conocer las opciones de vivienda que podrían ajustarse a tus necesidades.');
+    }
+    l.push('');
+    l.push('Si necesitas cambiar el horario, puedes responderme por aquí.');
+    l.push('');
+    l.push('Saludos,');
+    l.push((quien ? quien + '\n' : '') + 'Real del Alba');
+    return l.join('\n');
+  }
+
+  /** Mensaje para cuando no contestó. */
+  function msgIntento(s) {
+    var n = nombreCorto(s.nombre);
+    var quien = limpio(s.quien);
+    var t = (n ? n + ', b' : 'B') + 'uen día. Le marqué de Real del Alba, el fraccionamiento en Villagrán. ' +
+      'Le busco porque hace tiempo nos pidió informes y estamos retomando el seguimiento. ' +
+      'Si todavía le interesa, con gusto le platico cómo revisar sus opciones actuales. ¿Le marco más tarde?';
+    return t + (quien ? '\n\n' + quien + '\nReal del Alba' : '');
+  }
+
+  /* ---------------- Ficha de seguimiento ---------------- */
+  var ETIQ = {
+    situacion:  { ya_compro:'Ya compró casa', sigue_buscando:'Todavía no compra' },
+    cotiza:     { si:'Sí cotiza en el IMSS', no:'No cotiza actualmente', nose:'No sabe' },
+    intencion:  { sigue:'Sigue buscando', despues:'Lo considera más adelante', no:'Ya no está en sus planes' },
+    vigente:    { sigue:'El mismo motivo sigue vigente', cambio:'Su situación ya cambió' },
+    vivienda:   { renta:'Está rentando', familiares:'Vive con familiares', propia:'Ya tiene casa propia', otro:'Otra situación' },
+    resultado:  { contactado:'Contestó y platicó', reagendar:'Pidió que le marcaran después', no_contesto:'No contestó', equivocado:'Número equivocado' }
+  };
+
+  function campo(label, valor, estado) {
+    return { label: label, valor: limpio(valor), estado: estado || (limpio(valor) ? 'ok' : 'vacio') };
+  }
+  /** Deja el campo solo cuando la rama de la conversación lo hace aplicable.
+      Lo que no aplica no es un pendiente: simplemente no va en la ficha. */
+  function si(cond, c) { return cond ? c : null; }
+
+  function ficha(s) {
+    var c = clasificar(s);
+    var A = [
+      campo('Nombre', s.nombre),
+      campo('Teléfono', s.telefono),
+      campo('Pidió informes en', s.anio),
+      campo('Proyecto', s.proyecto || 'Real del Alba')
+    ];
+
+    var hablo = s.resultado === 'contactado';
+    var compro = s.situacion === 'ya_compro';
+    var B = [
+      campo('Resultado de la llamada', ETIQ.resultado[s.resultado] || ''),
+      si(hablo, campo('¿Compró vivienda?', ETIQ.situacion[s.situacion] || '')),
+      si(hablo && !compro, campo('Intención hoy', ETIQ.intencion[s.intencion] || '')),
+      si(hablo && !compro, campo('Situación laboral', ETIQ.cotiza[s.cotiza] || '', s.cotiza === 'nose' ? 'pend' : undefined)),
+      si(s.intencion === 'despues', campo('Plazo aproximado', s.plazo)),
+      si(hablo && !compro && s.intencion !== 'no', campo('Necesidades y ubicación', s.necesidades))
+    ].filter(Boolean);
+
+    var explora = hablo && !compro && s.intencion !== 'no';
+    var C = [
+      si(hablo && !compro, campo('Motivo por el que no compró antes', s.motivoHistorico || s.motivoCategoria)),
+      si(hablo && !compro, campo('Categoría del motivo', s.motivoCategoria)),
+      si(hablo && !compro, campo('Obstáculo actual', ETIQ.vigente[s.motivoVigente] || '', s.motivoVigente === 'sigue' ? 'pend' : undefined)),
+      si(explora, campo('Situación de vivienda', ETIQ.vivienda[s.vivienda] || '')),
+      si(explora, campo('Qué necesita resolver', s.resolver)),
+      campo('Clasificación', ETIQ_CLAS[c], c === 'sincontacto' ? 'pend' : 'ok')
+    ].filter(Boolean);
+
+    var citaTxt = fechaLarga(s.citaFecha, s.citaHora);
+    var estadoCita = 'vacio';
+    if (citaTxt) estadoCita = 'ok';
+    else if (s.aceptaCita === 'si') estadoCita = 'pend';
+    var D = [
+      campo('Asesor responsable', s.asesor, (s.aceptaCita === 'si' && !limpio(s.asesor)) ? 'pend' : undefined),
+      campo('Cita', citaTxt || (s.aceptaCita === 'si' ? 'Aceptó, falta confirmar día y hora' : ''), estadoCita),
+      si(s.aceptaCita === 'si', campo('Horarios ofrecidos', [limpio(s.alt1), limpio(s.alt2)].filter(Boolean).join(' · '))),
+      si(s.aceptaCita === 'si', campo('WhatsApp', s.whatsappOk === 'si' ? 'Autorizó la confirmación' : (s.whatsappOk === 'no' ? 'No autorizó' : ''))),
+      campo('Próxima acción', s.proximaAccion),
+      campo('Fecha de próxima acción', fechaLarga(s.proximaFecha) || ''),
+      si(s.resultado === 'reagendar', campo('Volver a marcar', fechaLarga(s.reagendaFecha, s.reagendaHora) || '')),
+      si(s.intencion === 'no' || s.noContactar === 'si' || s.cerrarSeguimiento,
+         campo('No contactar', s.noContactar === 'si' ? 'Pidió no ser contactado' : 'No lo pidió')),
+      campo('Resumen', s.resumen)
+    ].filter(Boolean);
+
+    return [
+      { titulo: 'A · Datos de contacto', campos: A },
+      { titulo: 'B · Situación actual', campos: B },
+      { titulo: 'C · Oportunidad comercial', campos: C },
+      { titulo: 'D · Siguiente paso', campos: D }
+    ];
+  }
+
+  function fichaTexto(s) {
+    var bl = ficha(s), out = ['FICHA DE RECONTACTO · REAL DEL ALBA'];
+    if (limpio(s.idLead)) out.push('Lead ' + s.idLead + (limpio(s.quien) ? ' · recontactó ' + s.quien : ''));
+    bl.forEach(function (b) {
+      out.push('');
+      out.push(b.titulo.toUpperCase());
+      b.campos.forEach(function (f) {
+        var v = f.estado === 'vacio' ? 'no se preguntó' : f.valor;
+        if (f.estado === 'pend' && f.valor) v = f.valor + ' (por verificar)';
+        out.push('  ' + f.label + ': ' + v);
+      });
+    });
+    return out.join('\n');
+  }
+
+  /* ---------------- Resumen sugerido ---------------- */
+  function resumenSugerido(s) {
+    var f = [];
+    if (s.situacion === 'ya_compro') f.push('Ya compró casa.');
+    if (s.intencion === 'sigue') f.push('Sigue buscando casa.');
+    if (s.intencion === 'despues') f.push('Lo quiere retomar más adelante' + (limpio(s.plazo) ? ': ' + limpio(s.plazo) : '') + '.');
+    if (s.intencion === 'no') f.push('Ya no está en sus planes.');
+
+    var motivo = limpio(s.motivoHistorico) || limpio(s.motivoCategoria);
+    if (motivo) {
+      var cierre = s.motivoVigente === 'cambio' ? ' Eso ya cambió.'
+                 : (s.motivoVigente === 'sigue' ? ' Sigue igual.' : '');
+      f.push('Antes se detuvo por: ' + motivo.replace(/\.*$/, '') + '.' + cierre);
+    } else if (s.motivoVigente === 'cambio') {
+      f.push('Su situación ya cambió desde entonces.');
+    } else if (s.motivoVigente === 'sigue') {
+      f.push('El mismo obstáculo sigue vigente.');
+    }
+
+    if (limpio(s.resolver)) f.push('Para avanzar necesita: ' + limpio(s.resolver).replace(/\.*$/, '') + '.');
+    var viv = [];
+    if (s.vivienda) viv.push(ETIQ.vivienda[s.vivienda] || '');
+    if (limpio(s.necesidades)) viv.push('busca ' + limpio(s.necesidades).replace(/\.*$/, ''));
+    if (viv.length) f.push(viv.join('; ') + '.');
+
+    var cita = fechaLarga(s.citaFecha, s.citaHora);
+    if (cita) f.push('Cita el ' + cita + (limpio(s.asesor) ? ' con ' + limpio(s.asesor) : '') + '.');
+    else if (limpio(s.proximaAccion)) {
+      f.push('Acordado: ' + limpio(s.proximaAccion).replace(/\.*$/, '') +
+             (fechaLarga(s.proximaFecha) ? ' el ' + fechaLarga(s.proximaFecha) : '') + '.');
+    }
+    if (s.noContactar === 'si') f.push('PIDIÓ NO SER CONTACTADO.');
+    return f.join(' ');
+  }
+
+  raiz.RDA = {
+    MOTIVOS: MOTIVOS, RESOLVER: RESOLVER, ETIQ: ETIQ, ETIQ_CLAS: ETIQ_CLAS,
+    esc: esc, limpio: limpio, nombreCorto: nombreCorto, fechaLarga: fechaLarga, hora12: hora12,
+    guionApertura: guionApertura, guionCierre: guionCierre,
+    clasificar: clasificar, razonClasificacion: razonClasificacion, citaCompleta: citaCompleta, pasoConcreto: pasoConcreto,
+    msgWhatsApp: msgWhatsApp, msgIntento: msgIntento,
+    ficha: ficha, fichaTexto: fichaTexto, resumenSugerido: resumenSugerido
+  };
+})(typeof window !== 'undefined' ? window : this);
+</script>
+
+<script>
+/* =====================================================================
+   Consola: estado, conexión con Apps Script y comportamiento de la UI.
+   ===================================================================== */
+(function () {
+  "use strict";
+  var R = window.RDA;
+  var $  = function (s) { return document.querySelector(s); };
+  var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+
+  var LS_URL = 'rda_url', LS_QUIEN = 'rda_quien';
+  var urlApi = '', S = null, leadActual = null, leads = [], anioFiltro = '', guardando = false, token = '';
+
+  /* ---------------- almacenamiento local, tolerante a fallos ---------------- */
+  function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+  /* ---------------- estado de la llamada ---------------- */
+  function estadoVacio() {
+    return {
+      idLead:'', nombre:'', telefono:'', anio:'', proyecto:'', quien:'',
+      resultado:'', reagendaFecha:'', reagendaHora:'',
+      situacion:'', cerrarSeguimiento:'', cotiza:'',
+      motivoCategoria:'', motivoHistorico:'', motivoVigente:'',
+      intencion:'', plazo:'', resolver:'', noContactar:'',
+      vivienda:'', necesidades:'',
+      aceptaCita:'', alt1:'', alt2:'', citaFecha:'', citaHora:'', asesor:'', whatsappOk:'',
+      proximaAccion:'', proximaFecha:'', resumen:''
+    };
+  }
+  S = estadoVacio();
+
+  function nuevoToken() {
+    var r = '';
+    try {
+      if (window.crypto && crypto.randomUUID) return 'IX-' + crypto.randomUUID();
+    } catch (e) {}
+    for (var i = 0; i < 12; i++) r += Math.floor(Math.random() * 36).toString(36);
+    return 'IX-' + Date.now().toString(36) + '-' + r;
+  }
+
+  /* ---------------- avisos ---------------- */
+  var toastT = null;
+  function toast(msg, err) {
+    var el = document.createElement('div');
+    el.className = 'toast' + (err ? ' err' : '');
+    el.textContent = msg;
+    document.body.appendChild(el);
+    clearTimeout(toastT);
+    toastT = setTimeout(function () { el.remove(); }, err ? 5200 : 2200);
+  }
+
+  /* ---------------- API ---------------- */
+  function conn(estado, texto) {
+    $('#dot').className = 'dot' + (estado ? ' ' + estado : '');
+    $('#conn-txt').textContent = texto;
+  }
+
+  function api(cuerpo) {
+    if (!urlApi) return Promise.reject(new Error('Falta la URL del script. Ábrela en «Conexión con Google Sheets».'));
+    /* text/plain evita el preflight de CORS, que Apps Script no responde. */
+    return fetch(urlApi, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(cuerpo),
+      redirect: 'follow'
+    }).then(function (res) {
+      if (!res.ok) throw new Error('El script respondió ' + res.status + '. Revisa que esté desplegado con acceso para cualquier usuario.');
+      return res.text();
+    }).then(function (t) {
+      var d;
+      try { d = JSON.parse(t); }
+      catch (e) { throw new Error('La respuesta no es JSON. Suele pasar cuando la URL no termina en /exec o el despliegue pide iniciar sesión.'); }
+      if (!d.ok) throw new Error(d.error || 'El script devolvió un error.');
+      return d;
+    });
+  }
+
+  /* ---------------- configuración ---------------- */
+  urlApi = lsGet(LS_URL);
+  $('#cfg-url').value = urlApi;
+  $('#quien').value = lsGet(LS_QUIEN);
+  S.quien = $('#quien').value;
+  if (!urlApi) $('#cfg').open = true;
+
+  $('#cfg-guardar').addEventListener('click', function () {
+    urlApi = $('#cfg-url').value.trim();
+    lsSet(LS_URL, urlApi);
+    $('#cfg-estado').textContent = urlApi ? 'Guardada en este navegador.' : 'Sin URL.';
+    if (urlApi) probarConexion();
+  });
+
+  $('#cfg-probar').addEventListener('click', function () {
+    urlApi = $('#cfg-url').value.trim();
+    lsSet(LS_URL, urlApi);
+    probarConexion();
+  });
+
+  function probarConexion() {
+    conn('wait', 'Probando…');
+    $('#cfg-estado').textContent = 'Probando…';
+    return api({ accion: 'ping' }).then(function (d) {
+      conn('on', 'Conectado');
+      $('#cfg-estado').textContent = 'Responde bien. Versión ' + d.version + ', hora del servidor ' + d.hora + '.';
+      cargarAsesores();
+      return true;
+    }).catch(function (e) {
+      conn('off', 'Sin conexión');
+      $('#cfg-estado').textContent = e.message;
+      return false;
+    });
+  }
+
+  $('#quien').addEventListener('input', function () {
+    S.quien = $('#quien').value;
+    lsSet(LS_QUIEN, S.quien);
+    pintar();
+  });
+
+  /* ---------------- lista de leads ---------------- */
+  function pintarLista(estado) {
+    var l = $('#lista');
+    l.innerHTML = '';
+    if (estado === 'cargando') { l.innerHTML = '<div class="cargando">Cargando leads…</div>'; return; }
+    if (!leads.length) {
+      l.innerHTML = '<div class="vacio-estado"><strong>Sin resultados</strong><p>Prueba con otro año, busca por teléfono o vuelve a cargar la cola.</p></div>';
+      $('#leads-sub').textContent = '';
+      return;
+    }
+    $('#leads-sub').textContent = leads.length + (leads.length === 1 ? ' lead' : ' leads');
+    leads.forEach(function (ld) {
+      var b = document.createElement('button');
+      b.className = 'lrow';
+      b.type = 'button';
+      if (leadActual && leadActual.id === ld.id) b.setAttribute('aria-current', 'true');
+
+      var t = document.createElement('div'); t.className = 't';
+      var nm = document.createElement('span'); nm.className = 'nm';
+      nm.textContent = ld.nombre || '(sin nombre) ' + (ld.telefono || ld.id);
+      var bg = document.createElement('span');
+      var op = ld.oportunidad || '';
+      bg.className = 'badge b-' + (op || 'sincontacto');
+      bg.textContent = op ? op.charAt(0).toUpperCase() + op.slice(1) : (ld.clasificacion || '—');
+      t.appendChild(nm); t.appendChild(bg);
+
+      var mt = document.createElement('span'); mt.className = 'mt';
+      mt.textContent = [ld.id, ld.telefono, ld.anio ? 'informes ' + ld.anio : '', ld.asesor]
+        .filter(Boolean).join(' · ');
+
+      b.appendChild(t); b.appendChild(mt);
+      b.addEventListener('click', function () { abrirLead(ld.id); });
+      l.appendChild(b);
+    });
+  }
+
+  function cargarCola() {
+    if (!urlApi) { toast('Primero pega la URL del script.', true); $('#cfg').open = true; return; }
+    pintarLista('cargando');
+    conn('wait', 'Cargando…');
+    api({ accion: 'cola', limite: 120, anio: anioFiltro })
+      .then(function (d) {
+        leads = d.leads || [];
+        conn('on', 'Conectado');
+        $('#leads-sub').textContent = leads.length + ' de ' + d.total;
+        pintarLista();
+      })
+      .catch(function (e) { conn('off', 'Sin conexión'); leads = []; pintarLista(); toast(e.message, true); });
+  }
+
+  var tBuscar = null;
+  $('#buscar').addEventListener('input', function () {
+    var q = $('#buscar').value.trim();
+    clearTimeout(tBuscar);
+    if (q.length < 2) return;
+    tBuscar = setTimeout(function () {
+      pintarLista('cargando');
+      api({ accion: 'buscar', q: q, limite: 40 })
+        .then(function (d) { leads = d.leads || []; pintarLista(); })
+        .catch(function (e) { leads = []; pintarLista(); toast(e.message, true); });
+    }, 350);
+  });
+
+  $('#segs').addEventListener('click', function (e) {
+    var b = e.target.closest('.seg'); if (!b) return;
+    anioFiltro = b.getAttribute('data-anio');
+    Array.prototype.forEach.call($('#segs').children, function (c) {
+      c.setAttribute('aria-pressed', c.getAttribute('data-anio') === anioFiltro ? 'true' : 'false');
+    });
+    cargarCola();
+  });
+
+  $('#recargar').addEventListener('click', cargarCola);
+
+  function cargarAsesores() {
+    api({ accion: 'asesores' }).then(function (d) {
+      var dl = $('#dl-asesores'); dl.innerHTML = '';
+      (d.asesores || []).forEach(function (a) {
+        var o = document.createElement('option'); o.value = a; dl.appendChild(o);
+      });
+    }).catch(function () {});
+  }
+
+  /* ---------------- abrir un lead ---------------- */
+  function abrirLead(id) {
+    if (guardando) { toast('Espera a que termine de guardar.', true); return; }
+    conn('wait', 'Abriendo lead…');
+    api({ accion: 'lead', id: id })
+      .then(function (d) {
+        conn('on', 'Conectado');
+        leadActual = d.lead;
+        limpiarLlamada(true);
+        S.idLead   = d.lead.id;
+        S.nombre   = d.lead.nombre || '';
+        S.telefono = d.lead.telefono || '';
+        S.anio     = d.lead.anio ? String(d.lead.anio) : '';
+        S.proyecto = d.lead.proyecto || 'Real del Alba';
+        S.asesor   = d.lead.asesor || '';
+        $('#f-asesor').value = S.asesor;
+        token = nuevoToken();
+        pintarAntecedentes(d.lead);
+        pintarLista();
+        abrirEtapa(1);
+        pintar();
+        $('#panel-llamada').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      })
+      .catch(function (e) { conn('off', 'Sin conexión'); toast(e.message, true); });
+  }
+
+  function pintarAntecedentes(ld) {
+    $('#ante').hidden = false;
+    var kv = $('#ante-kv');
+    kv.innerHTML = '';
+    [['Lead', ld.id], ['Teléfono', ld.telefono], ['Informes', ld.anio || '—'],
+     ['Clasificación', ld.clasificacion || '—'], ['Etapa', ld.etapa || '—'],
+     ['Estatus', ld.estatus || '—'], ['Asesor previo', ld.asesor || '—'],
+     ['Último contacto', ld.ultimoContacto || '—'], ['Días sin mover', ld.diasSinActualizacion || '—']
+    ].forEach(function (p) {
+      var s = document.createElement('span');
+      s.innerHTML = p[0] + ' <b>' + R.esc(p[1]) + '</b>';
+      kv.appendChild(s);
+    });
+
+    var h = [];
+    if (ld.antecedentes) h.push(ld.antecedentes);
+    if (ld.motivoDescarte) h.push('Motivo de descarte registrado: ' + ld.motivoDescarte);
+    if (ld.accionSiguiente) h.push('Acción siguiente pendiente: ' + ld.accionSiguiente + (ld.fechaProximo ? ' (' + ld.fechaProximo + ')' : ''));
+    (ld.interacciones || []).forEach(function (i) {
+      h.push('[' + (i.Fecha_hora || '') + ' · consola' + (i.Quien_llama ? ' · ' + i.Quien_llama : '') + '] ' +
+        [i.Resultado, i.Intencion_actual, i.Resumen].filter(Boolean).join(' · '));
+    });
+    $('#ante-hist').textContent = h.length ? h.join('\n\n') : 'Sin antecedentes registrados.';
+
+    var av = [];
+    if (String(ld.noContactar || '').match(/^s/i)) av.push('Este lead pidió no ser contactado. No le marques.');
+    if (!ld.nombre) av.push('No tenemos su nombre. Pregúntalo en la apertura y captúralo arriba.');
+    if (ld.clasificacion === 'Cliente / Venta cerrada') av.push('Está marcado como venta cerrada. Confirma antes de ofrecer algo.');
+    $('#ante-aviso').hidden = !av.length;
+    $('#ante-aviso').textContent = av.join(' ');
+
+    $('#llamada-sub').textContent = (ld.nombre || ld.telefono || ld.id) + (ld.anio ? ' · informes ' + ld.anio : '');
+  }
+
+  /* ---------------- etapas ---------------- */
+  function abrirEtapa(n) {
+    $$('.etapa[data-etapa]').forEach(function (et) {
+      var i = +et.getAttribute('data-etapa');
+      var body = $('#eb' + i);
+      if (!body) return;
+      if (i === n) { et.setAttribute('data-state', 'activa'); body.hidden = false; }
+      else {
+        body.hidden = true;
+        var st = et.getAttribute('data-state');
+        if (st === 'activa') et.setAttribute('data-state', 'pendiente');
+      }
+    });
+  }
+  function marcar(n, estado) {
+    var et = $('.etapa[data-etapa="' + n + '"]');
+    if (et) et.setAttribute('data-state', estado || 'hecha');
+  }
+
+  $$('.eh[data-abrir]').forEach(function (b) {
+    b.addEventListener('click', function () { abrirEtapa(+b.getAttribute('data-abrir')); });
+  });
+  $$('[data-ir]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var n = +b.getAttribute('data-ir');
+      for (var i = 1; i < n; i++) {
+        var et = $('.etapa[data-etapa="' + i + '"]');
+        if (et && et.getAttribute('data-state') !== 'omitida') marcar(i, 'hecha');
+      }
+      abrirEtapa(n); pintar();
+    });
+  });
+  $$('[data-omitir]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var n = +b.getAttribute('data-omitir');
+      marcar(n - 1 >= 1 ? n - 1 : 1, 'hecha');
+      var saltada = $('.etapa[data-etapa="' + (n - 1) + '"]');
+      if (n === 3) marcar(3, 'omitida');
+      if (n === 6) marcar(5, 'omitida');
+      abrirEtapa(n); pintar();
+    });
+  });
+
+  /* ---------------- campos de texto ---------------- */
+  var MAPA = {
+    'f-reag-fecha':'reagendaFecha', 'f-reag-hora':'reagendaHora',
+    'f-motivo':'motivoHistorico', 'f-plazo':'plazo', 'f-resolver':'resolver',
+    'f-necesidades':'necesidades', 'f-alt1':'alt1', 'f-alt2':'alt2',
+    'f-cita-fecha':'citaFecha', 'f-cita-hora':'citaHora', 'f-asesor':'asesor',
+    'f-prox-accion':'proximaAccion', 'f-prox-fecha':'proximaFecha',
+    'f-prox-accion2':'proximaAccion', 'f-prox-fecha2':'proximaFecha',
+    'f-resumen':'resumen'
+  };
+  Object.keys(MAPA).forEach(function (id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', function () { S[MAPA[id]] = el.value; pintar(); });
+  });
+
+  /* ---------------- opciones ---------------- */
+  $$('.opts[data-campo]').forEach(function (g) {
+    var campo = g.getAttribute('data-campo');
+    g.addEventListener('click', function (e) {
+      var b = e.target.closest('.opt'); if (!b) return;
+      var v = b.getAttribute('data-val');
+      S[campo] = (S[campo] === v) ? '' : v;
+      Array.prototype.forEach.call(g.children, function (c) {
+        c.setAttribute('aria-pressed', c.getAttribute('data-val') === S[campo] ? 'true' : 'false');
+      });
+      ramificar(campo);
+      pintar();
+    });
+  });
+
+  /** Abre, cierra y salta etapas según lo que contestó el prospecto. */
+  function ramificar(campo) {
+    if (campo === 'resultado') {
+      $('#caja-reagendar').hidden   = S.resultado !== 'reagendar';
+      $('#caja-nocontesto').hidden  = S.resultado !== 'no_contesto';
+      $('#row-ir-2').hidden         = S.resultado !== 'contactado';
+      if (S.resultado === 'contactado') { marcar(1, 'hecha'); abrirEtapa(2); }
+      if (S.resultado === 'equivocado') { marcar(1, 'hecha'); ['2','3','4','5','6'].forEach(function (n) { marcar(n, 'omitida'); }); }
+      if (S.resultado === 'no_contesto' || S.resultado === 'reagendar') {
+        marcar(1, 'hecha'); ['2','3','4','5','6'].forEach(function (n) { marcar(n, 'omitida'); });
+      }
+    }
+    if (campo === 'situacion') {
+      $('#caja-compro').hidden   = S.situacion !== 'ya_compro';
+      $('#caja-nocompro').hidden = S.situacion !== 'sigue_buscando';
+      if (S.situacion === 'ya_compro') {
+        marcar(2, 'hecha'); ['3','4','5','6'].forEach(function (n) { marcar(n, 'omitida'); });
+      } else if (S.situacion === 'sigue_buscando') {
+        ['3','4','5','6'].forEach(function (n) {
+          var et = $('.etapa[data-etapa="' + n + '"]');
+          if (et && et.getAttribute('data-state') === 'omitida') et.setAttribute('data-state', 'pendiente');
+        });
+      }
+    }
+    if (campo === 'cotiza') {
+      var n = { si:'Cotiza. Puedes avanzar con normalidad.',
+                no:'No cotiza. Regístralo y deja pendiente revisar qué opciones podrían aplicar. No se lo niegues en la llamada.',
+                nose:'No sabe. Oriéntale para que lo verifique antes de dar por hecho nada.' };
+      $('#nota-cotiza').textContent = n[S.cotiza] || '';
+    }
+    if (campo === 'motivoVigente') {
+      marcar(3, 'hecha');
+    }
+    if (campo === 'intencion') {
+      $('#caja-sigue').hidden      = S.intencion !== 'sigue';
+      $('#caja-despues').hidden    = S.intencion !== 'despues';
+      $('#caja-nointeres').hidden  = S.intencion !== 'no';
+      if (S.intencion === 'no') {
+        marcar(4, 'hecha'); marcar(5, 'omitida'); marcar(6, 'omitida');
+      } else {
+        ['5','6'].forEach(function (n) {
+          var et = $('.etapa[data-etapa="' + n + '"]');
+          if (et && et.getAttribute('data-state') === 'omitida') et.setAttribute('data-state', 'pendiente');
+        });
+      }
+    }
+    if (campo === 'aceptaCita') {
+      $('#caja-cita').hidden    = S.aceptaCita !== 'si';
+      $('#caja-sincita').hidden = S.aceptaCita !== 'no';
+      if (S.aceptaCita) marcar(6, 'hecha');
+    }
+    if (campo === 'noContactar' || campo === 'cerrarSeguimiento') {
+      if (S.cerrarSeguimiento === 'si') S.noContactar = 'si';
+    }
+  }
+
+  /* ---------------- chips ---------------- */
+  var chipsMotivo = $('#chips-motivo');
+  R.MOTIVOS.forEach(function (m) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.textContent = m.cat;
+    b.addEventListener('click', function () {
+      S.motivoCategoria = (S.motivoCategoria === m.cat) ? '' : m.cat;
+      Array.prototype.forEach.call(chipsMotivo.children, function (c) {
+        c.setAttribute('aria-pressed', c.textContent === S.motivoCategoria ? 'true' : 'false');
+      });
+      pintar();
+    });
+    chipsMotivo.appendChild(b);
+  });
+
+  var chipsRes = $('#chips-resolver');
+  R.RESOLVER.forEach(function (t) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.textContent = t;
+    b.addEventListener('click', function () {
+      var el = $('#f-resolver');
+      el.value = el.value ? el.value.replace(/\s*$/, '') + '. ' + t : t;
+      S.resolver = el.value; pintar();
+    });
+    chipsRes.appendChild(b);
+  });
+
+  /* ---------------- copiar ---------------- */
+  $$('[data-copiar]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var el = document.getElementById(b.getAttribute('data-copiar'));
+      if (!el || !el.textContent.trim()) { toast('Nada que copiar todavía.', true); return; }
+      function seleccionar() {
+        try {
+          var r = document.createRange(); r.selectNodeContents(el);
+          var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+          toast('Seleccionado: copia con Ctrl o Cmd + C');
+        } catch (e) { toast('Copia el texto manualmente.', true); }
+      }
+      try {
+        navigator.clipboard.writeText(el.textContent).then(function () { toast('Copiado'); }, seleccionar);
+      } catch (e) { seleccionar(); }
+    });
+  });
+
+  $('#btn-sugerir').addEventListener('click', function () {
+    var t = R.resumenSugerido(S);
+    if (!t) { toast('Captura algo de la conversación primero.', true); return; }
+    $('#f-resumen').value = t; S.resumen = t; pintar();
+  });
+
+  /* ---------------- pintado ---------------- */
+  function pintar() {
+    var ap = R.guionApertura(S);
+    $('#say-apertura').innerHTML = '<span class="tag">Lo que dices</span>' + ap.html +
+      (ap.alterno ? '<span class="alt">' + ap.alterno + '</span>' : '');
+    $('#hint1').textContent = S.nombre ? R.nombreCorto(S.nombre) : (S.telefono || '');
+
+    $('#say-cierre').innerHTML = '<span class="tag">Lo que dices</span>' + R.guionCierre(S);
+    $('#msg-intento').textContent = R.msgIntento(S);
+
+    /* espejo y pregunta de seguimiento del motivo histórico */
+    var motivo = R.limpio(S.motivoHistorico) || R.limpio(S.motivoCategoria);
+    var esp = $('#say-espejo');
+    esp.hidden = !motivo;
+    if (motivo) {
+      esp.innerHTML = '<span class="tag">Confirma lo que entendiste</span>Entiendo, entonces lo que más le detuvo fue <b>' +
+        R.esc(motivo.toLowerCase()) + '</b>, ¿correcto?';
+    }
+    var seg = $('#say-seguimiento');
+    var m = null;
+    R.MOTIVOS.forEach(function (x) { if (x.cat === S.motivoCategoria) m = x; });
+    seg.hidden = !m;
+    if (m) seg.innerHTML = '<span class="tag">Pregunta de seguimiento sugerida</span>' + R.esc(m.seg);
+
+    /* clasificación */
+    var c = R.clasificar(S);
+    var bd = $('#clas-badge');
+    bd.className = 'badge b-' + c;
+    bd.textContent = R.ETIQ_CLAS[c];
+    $('#clas-texto').textContent = S.idLead ? R.razonClasificacion(S) :
+      'Abre un lead y registra la llamada. La clasificación sale de su intención actual y del siguiente paso acordado, no de los datos que te dé.';
+
+    /* whatsapp */
+    var wa = R.msgWhatsApp(S);
+    $('#caja-wa').hidden = !wa;
+    $('#msg-wa').textContent = wa;
+
+    /* ficha */
+    pintarFicha();
+
+    $('#btn-guardar').disabled = !(S.idLead && S.resultado) || guardando;
+  }
+
+  function pintarFicha() {
+    var cont = $('#ficha');
+    cont.innerHTML = '';
+    R.ficha(S).forEach(function (b) {
+      var d = document.createElement('div'); d.className = 'bloque';
+      var h = document.createElement('h4'); h.textContent = b.titulo; d.appendChild(h);
+      var dl = document.createElement('dl');
+      b.campos.forEach(function (f) {
+        if (f.estado === 'vacio' && !S.idLead) return;
+        var row = document.createElement('div');
+        row.className = 'f' + (f.estado === 'vacio' ? ' vacio' : (f.estado === 'pend' ? ' pend' : ''));
+        var dt = document.createElement('dt'); dt.textContent = f.label;
+        var dd = document.createElement('dd');
+        dd.textContent = f.estado === 'vacio' ? 'No se preguntó' :
+          (f.estado === 'pend' && f.valor ? f.valor + ' · por verificar' : f.valor);
+        row.appendChild(dt); row.appendChild(dd); dl.appendChild(row);
+      });
+      d.appendChild(dl); cont.appendChild(d);
+    });
+    $('#ficha-texto').textContent = S.idLead ? R.fichaTexto(S) : 'Abre un lead para generar su ficha.';
+  }
+
+  /* ---------------- limpiar ---------------- */
+  function limpiarLlamada(conservaLead) {
+    var quien = S.quien, lead = conservaLead ? null : null;
+    S = estadoVacio();
+    S.quien = quien;
+
+    Object.keys(MAPA).forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    $$('.opt[data-val]').forEach(function (o) { o.setAttribute('aria-pressed', 'false'); });
+    ['caja-reagendar','caja-nocontesto','row-ir-2','caja-compro','caja-nocompro',
+     'caja-sigue','caja-despues','caja-nointeres','caja-cita','caja-sincita','caja-wa'
+    ].forEach(function (id) { var el = document.getElementById(id); if (el) el.hidden = true; });
+    $('#nota-cotiza').textContent = '';
+    Array.prototype.forEach.call(chipsMotivo.children, function (c) { c.setAttribute('aria-pressed', 'false'); });
+    $$('.etapa[data-etapa]').forEach(function (et) { et.setAttribute('data-state', 'pendiente'); });
+    $$('.eb').forEach(function (b) { if (b.id) b.hidden = true; });
+    $('#estado-guardado').textContent = '';
+
+    if (!conservaLead) {
+      leadActual = null; token = '';
+      $('#ante').hidden = true;
+      $('#llamada-sub').textContent = 'Selecciona un lead';
+      pintarLista();
+    }
+    pintar();
+  }
+
+  $('#btn-limpiar').addEventListener('click', function () {
+    if (guardando) return;
+    limpiarLlamada(false);
+    toast('Listo para el siguiente lead');
+  });
+
+  /* ---------------- guardar ---------------- */
+  $('#btn-guardar').addEventListener('click', function () {
+    if (guardando || !S.idLead) return;
+    if (!S.resultado) { toast('Marca primero qué pasó al llamar.', true); return; }
+    if (!token) token = nuevoToken();
+
+    guardando = true;
+    $('#btn-guardar').disabled = true;
+    $('#estado-guardado').textContent = 'Guardando…';
+    conn('wait', 'Guardando…');
+
+    var datos = {};
+    Object.keys(S).forEach(function (k) { datos[k] = S[k]; });
+    datos.oportunidad = R.clasificar(S);
+    datos.noContactar = S.noContactar === 'si';
+    datos.whatsappOk  = S.whatsappOk === 'si';
+
+    api({ accion: 'guardar', id: S.idLead, token: token, datos: datos })
+      .then(function (d) {
+        conn('on', 'Conectado');
+        if (d.duplicado) {
+          $('#estado-guardado').textContent = 'Ya estaba guardada, no se duplicó.';
+          toast('Esta llamada ya estaba guardada');
+        } else {
+          $('#estado-guardado').textContent = 'Guardado en la fila ' + d.fila + ' · ' + d.clasificacion + ' / ' + d.estatus;
+          toast('Guardado en la hoja');
+        }
+        /* refleja el cambio en la lista sin volver a pedir todo */
+        for (var i = 0; i < leads.length; i++) {
+          if (leads[i].id === S.idLead) {
+            leads[i].oportunidad = datos.oportunidad;
+            leads[i].clasificacion = d.clasificacion;
+            leads[i].asesor = S.asesor || leads[i].asesor;
+            if (S.nombre) leads[i].nombre = S.nombre;
+            break;
+          }
+        }
+        pintarLista();
+        guardando = false;
+        token = '';
+        setTimeout(function () { limpiarLlamada(false); }, 900);
+      })
+      .catch(function (e) {
+        guardando = false;
+        conn('off', 'Sin conexión');
+        $('#estado-guardado').textContent = 'No se guardó.';
+        $('#btn-guardar').disabled = false;
+        toast('No se guardó: ' + e.message, true);
+      });
+  });
+
+  /* ---------------- arranque ---------------- */
+  pintar();
+  if (urlApi) {
+    probarConexion().then(function (ok) { if (ok) cargarCola(); });
+  }
+})();
+</script>
+</body>
+</html>
