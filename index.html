@@ -1,0 +1,1868 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Consola de recontacto · Real del Alba</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: barra fija · columna de leads + columna de llamada · una sola columna en teléfono */
+:root{
+  --bg:#f1f3ef; --surface:#ffffff; --surface-2:#e8ebe4; --sunk:#f7f8f5;
+  --ink:#171a18; --muted:#5e665f; --line:#d5d9d0;
+  --accent:#2e3c7c; --accent-soft:#e2e6f5; --accent-ink:#2e3c7c; --on-accent:#ffffff;
+  --ok:#1a6e45; --ok-soft:#dcefe4;
+  --warn:#8d5c05; --warn-soft:#f6ead1;
+  --bad:#9a2e23; --bad-soft:#f6e0dd;
+  --idle:#5f6a72; --idle-soft:#e6e9ea;
+  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",Roboto,sans-serif;
+  --r:10px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#14171a; --surface:#1c2023; --surface-2:#262b2f; --sunk:#191d20;
+  --ink:#e9ede9; --muted:#9ba49d; --line:#333a3e;
+  --accent:#9dabf3; --accent-soft:#242b47; --accent-ink:#b4bff7; --on-accent:#14171a;
+  --ok:#5cc08d; --ok-soft:#1d3a2c;
+  --warn:#dca847; --warn-soft:#3a2f16;
+  --bad:#e68176; --bad-soft:#3d241f;
+  --idle:#9aa5ab; --idle-soft:#2a3034;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#14171a; --surface:#1c2023; --surface-2:#262b2f; --sunk:#191d20;
+  --ink:#e9ede9; --muted:#9ba49d; --line:#333a3e;
+  --accent:#9dabf3; --accent-soft:#242b47; --accent-ink:#b4bff7; --on-accent:#14171a;
+  --ok:#5cc08d; --ok-soft:#1d3a2c;
+  --warn:#dca847; --warn-soft:#3a2f16;
+  --bad:#e68176; --bad-soft:#3d241f;
+  --idle:#9aa5ab; --idle-soft:#2a3034;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+h1,h2,h3,h4{font-family:var(--display);margin:0;text-wrap:balance}
+p{margin:0}
+img{max-width:100%}
+[hidden]{display:none !important}
+button{font:inherit;font-family:var(--body);cursor:pointer}
+input,select,textarea{font:inherit;font-family:var(--body);color:var(--ink);background:var(--surface);
+  border:1px solid var(--line);border-radius:8px;padding:.5rem .6rem;width:100%}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible,
+summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+textarea{resize:vertical;min-height:60px}
+
+/* ---------- barra ---------- */
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;background:var(--surface);border-bottom:1px solid var(--line)}
+.bar-in{max-width:1320px;margin:0 auto;padding:.65rem 16px;display:flex;gap:.9rem;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.brand{display:flex;gap:.6rem;align-items:center;min-width:0}
+.brand .mark{width:30px;height:30px;border-radius:7px;background:var(--accent);color:var(--on-accent);
+  display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:12px;flex:0 0 auto}
+.brand h1{font-size:15.5px;font-weight:700;letter-spacing:-.01em;white-space:nowrap}
+.brand p{font-size:12px;color:var(--muted)}
+.bar-right{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}
+.who{display:flex;align-items:center;gap:.4rem;font-size:12px;color:var(--muted);white-space:nowrap}
+.who input{width:140px;padding:.33rem .5rem;font-size:13px}
+.conn{display:inline-flex;align-items:center;gap:.35rem;font-size:12px;color:var(--muted);white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--idle);flex:0 0 auto}
+.dot.on{background:var(--ok)} .dot.off{background:var(--bad)} .dot.wait{background:var(--warn)}
+
+.wrap{max-width:1320px;margin:0 auto;padding-inline:16px;padding-block:1rem 3rem;display:flex;flex-direction:column;gap:1rem}
+
+/* ---------- config ---------- */
+.cfg{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.cfg>summary{padding:.75rem 1rem;cursor:pointer;font-family:var(--display);font-weight:700;font-size:13px;
+  text-transform:uppercase;letter-spacing:.04em;list-style:none}
+.cfg>summary::-webkit-details-marker{display:none}
+.cfg>summary:after{content:"+";float:right;color:var(--muted);font-weight:500}
+.cfg[open]>summary:after{content:"\2013"}
+.cfg-body{padding:0 1rem 1rem;display:flex;flex-direction:column;gap:.7rem}
+
+/* ---------- rejilla ---------- */
+.cols{display:grid;grid-template-columns:320px minmax(0,1fr);gap:1rem;align-items:start}
+@media(max-width:1000px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);min-width:0}
+.panel>header{padding:.75rem 1rem;border-bottom:1px solid var(--line);display:flex;align-items:center;
+  justify-content:space-between;gap:.5rem;flex-wrap:wrap}
+.panel>header h2{font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.panel>header .sub{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* ---------- lista de leads ---------- */
+.tools{padding:.7rem 1rem;display:flex;flex-direction:column;gap:.5rem;border-bottom:1px solid var(--line)}
+.segs{display:flex;gap:.3rem;flex-wrap:wrap}
+.seg{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:.28rem .62rem;font-size:12.5px;color:var(--ink)}
+.seg[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.lista{display:flex;flex-direction:column;max-height:min(68vh,620px);overflow-y:auto}
+.lrow{border-bottom:1px solid var(--line);padding:.6rem 1rem;display:flex;flex-direction:column;gap:.25rem;
+  background:none;border-left:0;border-right:0;border-top:0;text-align:left;color:var(--ink);width:100%}
+.lrow:last-child{border-bottom:0}
+.lrow:hover{background:var(--sunk)}
+.lrow[aria-current="true"]{background:var(--accent-soft)}
+.lrow .t{display:flex;gap:.5rem;align-items:center;justify-content:space-between}
+.lrow .nm{font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.lrow .mt{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ---------- etapas ---------- */
+.etapa{border-bottom:1px solid var(--line)}
+.etapa:last-of-type{border-bottom:0}
+.eh{display:flex;gap:.65rem;align-items:center;width:100%;background:none;border:0;padding:.75rem 1rem;text-align:left;color:var(--ink)}
+.eh .n{flex:0 0 23px;height:23px;border-radius:50%;display:grid;place-items:center;
+  font-family:var(--display);font-weight:700;font-size:11.5px;background:var(--surface-2);color:var(--muted)}
+.etapa[data-state="activa"] .eh .n{background:var(--accent);color:var(--on-accent)}
+.etapa[data-state="hecha"] .eh .n{background:var(--ok-soft);color:var(--ok)}
+.etapa[data-state="omitida"] .eh .n{background:var(--idle-soft);color:var(--idle)}
+.eh h3{font-size:14px;font-weight:600}
+.eh .hint{font-size:11.5px;color:var(--muted);margin-left:auto;text-align:right;max-width:46%}
+.etapa[data-state="pendiente"] .eh{opacity:.5}
+.eb{padding:0 1rem 1.05rem;display:flex;flex-direction:column;gap:.85rem}
+
+.say{background:var(--sunk);border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:0 8px 8px 0;padding:.7rem .85rem;font-size:14.5px;line-height:1.55}
+.say .tag{display:block;font-family:var(--display);font-size:10px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:.35rem}
+.say b{background:var(--accent-soft);color:var(--accent-ink);padding:0 .18em;border-radius:3px;font-weight:600}
+.say .alt{display:block;margin-top:.5rem;padding-top:.5rem;border-top:1px dashed var(--line);font-size:13.5px;color:var(--muted)}
+
+.q{display:flex;flex-direction:column;gap:.45rem}
+.q>.ask{font-size:14px}
+.q>.ask:before{content:"\201C"} .q>.ask:after{content:"\201D"}
+label.lb{font-size:12.5px;font-weight:600;color:var(--muted)}
+.fld{display:flex;flex-direction:column;gap:.3rem;min-width:0}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:.55rem}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.55rem}
+@media(max-width:560px){.g2,.g3{grid-template-columns:1fr}}
+
+.opts{display:flex;gap:.35rem;flex-wrap:wrap}
+.opt{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:.34rem .72rem;font-size:13px;color:var(--ink)}
+.opt[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.opt.danger[aria-pressed="true"]{background:var(--bad);border-color:var(--bad);color:#fff}
+.opt.soft[aria-pressed="true"]{background:var(--warn);border-color:var(--warn);color:#fff}
+.chips{display:flex;gap:.3rem;flex-wrap:wrap}
+.chip{background:var(--surface-2);border:1px solid transparent;border-radius:999px;padding:.24rem .58rem;font-size:12px;color:var(--muted)}
+.chip:hover{color:var(--ink);border-color:var(--line)}
+.chip[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent-ink);border-color:var(--accent)}
+
+.btn{background:var(--accent);color:var(--on-accent);border:1px solid var(--accent);border-radius:8px;
+  padding:.52rem .92rem;font-weight:600;font-size:14px}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line);font-weight:500}
+.btn.sm{padding:.32rem .62rem;font-size:12.5px}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:.45rem;flex-wrap:wrap;align-items:center}
+
+.out{background:var(--sunk);border:1px dashed var(--line);border-radius:8px;padding:.7rem .8rem;
+  font-size:13.5px;white-space:pre-wrap;word-break:break-word;line-height:1.5}
+.nota{font-size:12px;color:var(--muted)}
+.aviso{font-size:12.5px;color:var(--warn);background:var(--warn-soft);border-radius:8px;padding:.5rem .65rem}
+
+.badge{display:inline-flex;align-items:center;gap:.3rem;border-radius:999px;padding:.14rem .55rem;
+  font-size:11.5px;font-weight:600;font-family:var(--display);white-space:nowrap}
+.badge:before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.b-verde{background:var(--ok-soft);color:var(--ok)}
+.b-amarillo{background:var(--warn-soft);color:var(--warn)}
+.b-rojo{background:var(--bad-soft);color:var(--bad)}
+.b-sincontacto{background:var(--idle-soft);color:var(--idle)}
+
+.veredicto{display:flex;gap:.65rem;align-items:flex-start;background:var(--sunk);border:1px solid var(--line);
+  border-radius:8px;padding:.7rem .8rem}
+.veredicto p{font-size:13px;color:var(--muted)}
+
+/* ---------- antecedentes ---------- */
+.ante{padding:.75rem 1rem;display:flex;flex-direction:column;gap:.55rem;border-bottom:1px solid var(--line)}
+.kv{display:flex;flex-wrap:wrap;gap:.3rem .9rem;font-size:12.5px;color:var(--muted)}
+.kv b{color:var(--ink);font-weight:600}
+.hist{background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:.6rem .7rem;
+  font-size:13px;white-space:pre-wrap;max-height:190px;overflow-y:auto;line-height:1.5}
+
+/* ---------- ficha ---------- */
+.ficha{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;padding:0 1rem 1rem}
+@media(max-width:760px){.ficha{grid-template-columns:1fr}}
+.bloque{border:1px solid var(--line);border-radius:8px;padding:.7rem .8rem;background:var(--sunk);min-width:0}
+.bloque h4{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.45rem}
+.bloque dl{margin:0;display:flex;flex-direction:column;gap:.28rem}
+.bloque .f{display:flex;gap:.5rem;font-size:13px;align-items:baseline}
+.bloque .f dt{flex:0 0 42%;color:var(--muted);font-size:12.5px}
+.bloque .f dd{margin:0;flex:1 1 auto;min-width:0;word-break:break-word}
+.bloque .f.vacio dd{color:var(--muted);font-style:italic}
+.bloque .f.pend dd{color:var(--warn)}
+.leyenda{display:flex;gap:.8rem;flex-wrap:wrap;font-size:11.5px;color:var(--muted);padding:0 1rem .9rem}
+.leyenda i{font-style:italic}
+
+.fin{display:flex;gap:.7rem;align-items:flex-start;border:1px solid var(--ok);background:var(--ok-soft);
+  border-radius:8px;padding:.8rem .9rem}
+.fin .ic{flex:0 0 22px;height:22px;border-radius:50%;background:var(--ok);color:var(--surface);
+  display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:12px}
+.fin h4{font-size:14px;color:var(--ok);margin-bottom:.15rem}
+.fin p{font-size:13px;color:var(--ink)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(1.1rem + env(safe-area-inset-bottom,0px));
+  background:var(--ink);color:var(--bg);padding:.5rem .9rem;border-radius:999px;font-size:13px;z-index:60;
+  box-shadow:0 6px 18px rgba(0,0,0,.2);max-width:calc(100vw - 32px);text-align:center}
+.toast.err{background:var(--bad);color:#fff}
+@media (prefers-reduced-motion:no-preference){.toast{animation:pop .2s ease}}
+@keyframes pop{from{opacity:0;transform:translate(-50%,6px)}}
+
+.vacio-estado{padding:2rem 1.2rem;text-align:center;color:var(--muted);display:flex;flex-direction:column;gap:.4rem;align-items:center}
+.vacio-estado strong{font-family:var(--display);font-size:15px;color:var(--ink);font-weight:700}
+.vacio-estado p{font-size:13px;max-width:36ch}
+.cargando{padding:1.3rem;text-align:center;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="bar-in">
+    <div class="brand">
+      <div class="mark">RA</div>
+      <div><h1>Consola de recontacto</h1><p>Real del Alba · Villagrán · <span id="version">v3 · 14 oct 2026</span></p></div>
+    </div>
+    <div class="bar-right">
+      <label class="who">Agente <input id="quien" placeholder="tu nombre" autocomplete="off"></label>
+      <span class="conn"><span class="dot" id="dot"></span><span id="conn-txt">Sin conectar</span></span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <details class="cfg" id="cfg">
+    <summary>Conexión con Google Sheets</summary>
+    <div class="cfg-body">
+      <div class="fld">
+        <label class="lb" for="cfg-url">URL de la aplicación web de Apps Script</label>
+        <input id="cfg-url" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off" spellcheck="false">
+        <p class="nota">Se guarda en este navegador. Despliega el script como aplicación web, ejecutándose como tú y con acceso para cualquier usuario, y pega aquí la URL que termina en <code>/exec</code>.</p>
+      </div>
+      <div class="row">
+        <button class="btn sm" id="cfg-probar">Probar conexión</button>
+        <button class="btn sm ghost" id="cfg-guardar">Guardar</button>
+        <span class="nota" id="cfg-estado"></span>
+      </div>
+    </div>
+  </details>
+
+  <div class="cols">
+
+    <!-- ================= LEADS ================= -->
+    <section class="panel">
+      <header><h2>Leads</h2><span class="sub" id="leads-sub"></span></header>
+      <div class="tools">
+        <input id="buscar" placeholder="Buscar por nombre, teléfono o ID" autocomplete="off">
+        <div class="segs" id="segs">
+          <button class="seg" data-anio="" aria-pressed="true">Todos</button>
+          <button class="seg" data-anio="2022">2022</button>
+          <button class="seg" data-anio="2023">2023</button>
+          <button class="seg" data-anio="2024">2024</button>
+          <button class="seg" data-anio="2025">2025</button>
+        </div>
+        <div class="segs" id="segs-orden">
+          <button class="seg" data-orden="hoja" aria-pressed="true">Orden de la hoja</button>
+          <button class="seg" data-orden="antiguos">Más antiguos primero</button>
+          <button class="seg" data-orden="sinnombre">Solo sin nombre</button>
+        </div>
+        <div class="row">
+          <button class="btn sm ghost" id="recargar">Cargar leads</button>
+          <button class="btn sm ghost" id="mas" hidden>Cargar 100 más</button>
+        </div>
+      </div>
+      <div class="lista" id="lista">
+        <div class="vacio-estado">
+          <strong>Conecta la hoja para empezar</strong>
+          <p>Pega la URL del script arriba y carga la cola. Salen primero los leads más antiguos, que son los que nadie ha vuelto a tocar.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= LLAMADA ================= -->
+    <section class="panel" id="panel-llamada">
+      <header>
+        <h2>Llamada</h2>
+        <span class="sub" id="llamada-sub">Selecciona un lead</span>
+      </header>
+
+      <div class="ante" id="ante" hidden>
+        <div class="kv" id="ante-kv"></div>
+        <div class="fld">
+          <label class="lb">Antecedentes en el CRM</label>
+          <div class="hist" id="ante-hist"></div>
+        </div>
+        <div class="aviso" id="ante-aviso" hidden></div>
+      </div>
+
+      <!-- ===== 1 · APERTURA ===== -->
+      <div class="etapa" data-etapa="1" data-state="pendiente">
+        <button class="eh" data-abrir="1"><span class="n">1</span><h3>Apertura</h3><span class="hint" id="hint1"></span></button>
+        <div class="eb" id="eb1" hidden>
+          <div class="say" id="say-apertura"><span class="tag">Agente</span></div>
+
+          <div class="q">
+            <label class="lb">¿Qué pasó al marcar?</label>
+            <div class="opts" data-campo="resultado">
+              <button class="opt" data-val="contactado">Contestó</button>
+              <button class="opt soft" data-val="reagendar">Está ocupado</button>
+              <button class="opt" data-val="no_contesto">No contestó</button>
+              <button class="opt danger" data-val="equivocado">Número equivocado</button>
+            </div>
+          </div>
+
+          <div id="caja-reagendar" hidden>
+            <div class="say"><span class="tag">Agente</span>Claro, <b>¿cuándo le queda mejor que le marque?</b></div>
+            <div class="g2">
+              <div class="fld"><label class="lb" for="f-reag-fecha">Día acordado</label><input id="f-reag-fecha" type="date"></div>
+              <div class="fld"><label class="lb" for="f-reag-hora">Hora</label><input id="f-reag-hora" type="time"></div>
+            </div>
+            <p class="nota">Con esto basta. Guarda y pasa al siguiente lead.</p>
+          </div>
+
+          <div id="caja-nocontesto" hidden>
+            <p class="nota">Registra el intento. Si vas a dejar mensaje, aquí está el texto.</p>
+            <div class="out" id="msg-intento"></div>
+            <div class="row"><button class="btn sm" data-copiar="msg-intento">Copiar mensaje</button></div>
+          </div>
+
+          <div id="caja-recuerda" hidden>
+            <div class="q">
+              <label class="lb">¿Ubica Real del Alba?</label>
+              <div class="opts" data-campo="recuerda">
+                <button class="opt" data-val="si">Sí lo recuerda</button>
+                <button class="opt soft" data-val="no">No lo recuerda</button>
+                <button class="opt danger" data-val="niega">Niega haber pedido informes</button>
+              </div>
+            </div>
+            <div class="say" id="say-norecuerda" hidden><span class="tag">Agente</span></div>
+            <div class="say" id="say-niega" hidden><span class="tag">Agente</span>Disculpe la molestia. <b>Voy a reportar el registro para que lo revisemos.</b> Gracias por atenderme.</div>
+            <p class="nota" id="nota-niega" hidden>Al guardar, el lead queda marcado para revisión en la hoja. No inventes de dónde salió el número.</p>
+            <div class="row" id="row-ir-2" hidden><button class="btn" data-ir="2">Continuar</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 2 · SITUACIÓN ACTUAL ===== -->
+      <div class="etapa" data-etapa="2" data-state="pendiente">
+        <button class="eh" data-abrir="2"><span class="n">2</span><h3>Situación actual</h3><span class="hint">Compró o sigue buscando</span></button>
+        <div class="eb" id="eb2" hidden>
+          <div class="q">
+            <span class="ask">Desde aquella vez, ¿logró comprar casa o todavía sigue buscando?</span>
+            <div class="opts" data-campo="situacion">
+              <button class="opt" data-val="sigue_buscando">Todavía busca</button>
+              <button class="opt" data-val="ya_compro">Ya compró</button>
+            </div>
+          </div>
+
+          <div id="caja-compro" hidden>
+            <div class="say"><span class="tag">Agente</span>¡Qué bueno! <b>¿Entonces ya no necesita información sobre nuestras viviendas?</b></div>
+            <div class="opts" data-campo="yaNoNecesita">
+              <button class="opt danger" data-val="si">Ya no necesita nada</button>
+              <button class="opt" data-val="no">Busca otra vivienda</button>
+            </div>
+            <div id="caja-otra-vivienda" hidden>
+              <div class="q">
+                <span class="ask">¿Está considerando comprar nuevamente?</span>
+                <div class="opts" data-campo="buscaOtra">
+                  <button class="opt" data-val="si">Sí, considera comprar otra</button>
+                  <button class="opt danger" data-val="no">No por ahora</button>
+                </div>
+              </div>
+            </div>
+            <p class="nota" id="nota-compro"></p>
+          </div>
+
+          <div id="caja-motivo" hidden>
+            <div class="say"><span class="tag">Agente</span>Entiendo. <b>¿Qué fue lo que impidió que comprara aquella vez?</b></div>
+            <p class="nota">Escucha sin interrumpir. Registra el motivo con sus palabras.</p>
+            <div class="say"><span class="tag">Si no recuerda o no sabe qué decir</span>¿Fue por el crédito, el precio, la ubicación o porque no era el momento adecuado?</div>
+            <div class="fld">
+              <label class="lb">Categoría del motivo</label>
+              <div class="chips" id="chips-motivo"></div>
+            </div>
+            <div class="fld">
+              <label class="lb" for="f-motivo">Con sus palabras</label>
+              <textarea id="f-motivo" placeholder="Lo que contestó, tal como lo dijo…"></textarea>
+            </div>
+            <div class="row"><button class="btn" data-ir="3">Continuar</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 3 · QUÉ CAMBIÓ ===== -->
+      <div class="etapa" data-etapa="3" data-state="pendiente">
+        <button class="eh" data-abrir="3"><span class="n">3</span><h3>Entender qué cambió</h3><span class="hint" id="hint3"></span></button>
+        <div class="eb" id="eb3" hidden>
+          <div class="q">
+            <span class="ask">¿Eso sigue siendo un obstáculo o su situación ha cambiado desde entonces?</span>
+            <div class="opts" data-campo="motivoVigente">
+              <button class="opt soft" data-val="sigue">Sigue siendo obstáculo</button>
+              <button class="opt" data-val="cambio">Su situación cambió</button>
+            </div>
+          </div>
+
+          <div id="caja-condicional" hidden>
+            <div class="say" id="say-condicional"><span class="tag">Pregunta que corresponde al motivo</span></div>
+
+            <div class="q" id="cond-credito" hidden>
+              <div class="opts" data-campo="cotiza">
+                <button class="opt" data-val="si">Sí cotiza</button>
+                <button class="opt" data-val="nose">No sabe</button>
+                <button class="opt soft" data-val="no">No cotiza</button>
+              </div>
+              <p class="nota" id="nota-cotiza"></p>
+            </div>
+
+            <div class="q" id="cond-precio" hidden>
+              <div class="opts" data-campo="precioFoco">
+                <button class="opt" data-val="total">El precio total</button>
+                <button class="opt" data-val="mensual">El pago mensual</button>
+              </div>
+            </div>
+
+            <div class="fld" id="cond-ubicacion" hidden>
+              <input id="f-zona" placeholder="Zona que busca ahora" autocomplete="off">
+            </div>
+
+            <div class="q" id="cond-pareja" hidden>
+              <div class="opts" data-campo="decisionPareja">
+                <button class="opt" data-val="si">Sí, deciden juntos</button>
+                <button class="opt" data-val="no">Ya decide solo</button>
+              </div>
+            </div>
+
+            <div class="q" id="cond-documentos" hidden>
+              <div class="opts" data-campo="documentosPendientes">
+                <button class="opt soft" data-val="si">Sigue pendiente</button>
+                <button class="opt" data-val="no">Ya lo resolvió</button>
+              </div>
+            </div>
+
+            <div class="fld" id="cond-info" hidden>
+              <input id="f-info-faltante" placeholder="Qué información le hizo falta" autocomplete="off">
+            </div>
+
+            <div class="fld">
+              <label class="lb" for="f-detalle-cambio">Qué contestó</label>
+              <textarea id="f-detalle-cambio" placeholder="Opcional: lo que agregó sobre su situación de hoy…"></textarea>
+            </div>
+          </div>
+
+          <p class="nota">Solo se hace la pregunta que corresponde a lo que dijo. No las hagas todas.</p>
+          <div class="row"><button class="btn" data-ir="4">Continuar</button></div>
+        </div>
+      </div>
+
+      <!-- ===== 4 · CONFIRMAR SU INTERÉS ===== -->
+      <div class="etapa" data-etapa="4" data-state="pendiente">
+        <button class="eh" data-abrir="4"><span class="n">4</span><h3>Confirmar su interés</h3><span class="hint">Define la clasificación</span></button>
+        <div class="eb" id="eb4" hidden>
+          <div class="q">
+            <span class="ask">Y actualmente, ¿sigue teniendo planes de comprar casa o lo está considerando para más adelante?</span>
+            <div class="opts" data-campo="intencion">
+              <button class="opt" data-val="sigue">Sigue con planes</button>
+              <button class="opt soft" data-val="despues">Más adelante</button>
+              <button class="opt danger" data-val="no">Ya no quiere comprar</button>
+            </div>
+          </div>
+
+          <div id="caja-sigue" hidden>
+            <div class="q">
+              <span class="ask">¿Qué sería lo más importante para usted: conocer sus opciones de crédito, encontrar un precio que le convenga o encontrar una ubicación adecuada?</span>
+              <div class="opts" data-campo="prioridad">
+                <button class="opt" data-val="credito">Sus opciones de crédito</button>
+                <button class="opt" data-val="precio">Un precio que le convenga</button>
+                <button class="opt" data-val="ubicacion">La ubicación</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="caja-vivienda" hidden>
+            <div class="q">
+              <label class="lb">Situación de vivienda, si sale en la conversación</label>
+              <div class="opts" data-campo="vivienda">
+                <button class="opt" data-val="renta">Renta</button>
+                <button class="opt" data-val="familiares">Con familiares</button>
+                <button class="opt" data-val="propia">Casa propia</button>
+                <button class="opt" data-val="otra">Otra</button>
+              </div>
+            </div>
+            <div id="caja-renta" hidden>
+              <div class="q">
+                <span class="ask">¿Tiene contemplado comprar para dejar de rentar o todavía está comparando opciones?</span>
+                <div class="opts" data-campo="rentaIntencion">
+                  <button class="opt" data-val="dejar_rentar">Quiere dejar de rentar</button>
+                  <button class="opt" data-val="comparando">Sigue comparando</button>
+                </div>
+              </div>
+              <div class="fld">
+                <label class="lb" for="f-renta-monto">Cuánto paga de renta <span class="nota">(pregúntalo solo si te sirve para entender su presupuesto)</span></label>
+                <input id="f-renta-monto" inputmode="numeric" placeholder="$" autocomplete="off">
+              </div>
+            </div>
+          </div>
+
+          <div id="caja-despues" hidden>
+            <div class="q">
+              <span class="ask">¿Tiene algún mes en mente para retomarlo?</span>
+              <input id="f-plazo" placeholder="Marzo, a fin de año, cuando junte el enganche…" autocomplete="off">
+            </div>
+            <div class="q">
+              <label class="lb">¿Aceptó que le demos seguimiento en esa fecha?</label>
+              <div class="opts" data-campo="aceptaSeguimiento">
+                <button class="opt" data-val="si">Sí aceptó</button>
+                <button class="opt soft" data-val="no">No quiso comprometerse</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="caja-nointeres" hidden>
+            <div class="say"><span class="tag">Agente</span>Entiendo, gracias por aclarármelo. Actualizamos el registro para respetar su decisión. Que tenga buena tarde.</div>
+            <div class="opts" data-campo="noContactar">
+              <button class="opt danger" data-val="si">Pidió que ya no le llamemos</button>
+              <button class="opt" data-val="no">No lo pidió expresamente</button>
+            </div>
+            <p class="nota">Aquí se cierra la llamada. No sigas con la cita.</p>
+          </div>
+
+          <div class="row" id="row-ir-5" hidden><button class="btn" data-ir="5">Continuar a la cita</button></div>
+        </div>
+      </div>
+
+      <!-- ===== 5 · PROPONER LA CITA ===== -->
+      <div class="etapa" data-etapa="5" data-state="pendiente">
+        <button class="eh" data-abrir="5"><span class="n">5</span><h3>Proponer la cita</h3><span class="hint">Solo si hay interés actual</span></button>
+        <div class="eb" id="eb5" hidden>
+          <div class="say" id="say-cita"><span class="tag">Agente</span></div>
+
+          <div class="q">
+            <label class="lb">¿Qué contestó?</label>
+            <div class="opts" data-campo="aceptaCita">
+              <button class="opt" data-val="si">Acepta la cita</button>
+              <button class="opt soft" data-val="no">No quiere agendar todavía</button>
+              <button class="opt soft" data-val="solo_info">Solo quiere información</button>
+            </div>
+          </div>
+
+          <div id="caja-cita" hidden>
+            <div class="say" id="say-horarios"><span class="tag">Agente</span></div>
+            <div class="g2">
+              <div class="fld"><label class="lb" for="f-alt1">Opción 1 que ofreciste</label><input id="f-alt1" placeholder="lunes a las 11" autocomplete="off"></div>
+              <div class="fld"><label class="lb" for="f-alt2">Opción 2 que ofreciste</label><input id="f-alt2" placeholder="lunes a las 6" autocomplete="off"></div>
+            </div>
+            <div class="g3">
+              <div class="fld"><label class="lb" for="f-cita-fecha">Fecha que eligió</label><input id="f-cita-fecha" type="date"></div>
+              <div class="fld"><label class="lb" for="f-cita-hora">Hora</label><input id="f-cita-hora" type="time"></div>
+              <div class="fld"><label class="lb" for="f-asesor">Asesor</label><input id="f-asesor" list="dl-asesores" autocomplete="off"><datalist id="dl-asesores"></datalist></div>
+            </div>
+            <div class="say" id="say-confirma" hidden><span class="tag">Confirma en voz alta</span></div>
+            <div class="q">
+              <span class="ask">¿Le puedo enviar la confirmación por WhatsApp a este número?</span>
+              <div class="opts" data-campo="whatsappOk">
+                <button class="opt" data-val="si">Sí autoriza</button>
+                <button class="opt" data-val="no">No autoriza</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="caja-sincita" hidden>
+            <div class="say"><span class="tag">Agente</span>Claro, no tiene que decidir ahora. <b>¿Prefiere que le envíe información por WhatsApp o que retomemos el contacto en otra fecha?</b></div>
+            <div class="opts" data-campo="viaSinCita">
+              <button class="opt" data-val="info">Información por WhatsApp</button>
+              <button class="opt" data-val="otra_fecha">Retomar en otra fecha</button>
+            </div>
+          </div>
+
+          <div id="caja-info" hidden>
+            <div class="say"><span class="tag">Agente</span>Con gusto. <b>¿Qué le interesa conocer primero: precios, ubicación o características de las viviendas?</b></div>
+            <div class="opts" data-campo="temaInfo">
+              <button class="opt" data-val="precios">Precios</button>
+              <button class="opt" data-val="ubicacion">Ubicación</button>
+              <button class="opt" data-val="caracteristicas">Características</button>
+            </div>
+            <div class="q">
+              <label class="lb">¿Autorizó recibir el mensaje?</label>
+              <div class="opts" data-campo="autorizaEnvio">
+                <button class="opt" data-val="si">Sí autoriza</button>
+                <button class="opt" data-val="no">No autoriza</button>
+              </div>
+            </div>
+            <p class="nota">Envía solo si autorizó, y solo información verificada. Nada de montos ni de pagos estimados.</p>
+          </div>
+
+          <div id="caja-prox" hidden>
+            <div class="g2">
+              <div class="fld"><label class="lb" for="f-prox-accion">Próxima acción</label><input id="f-prox-accion" placeholder="Volver a marcar, mandar precios…" autocomplete="off"></div>
+              <div class="fld"><label class="lb" for="f-prox-fecha">Fecha</label><input id="f-prox-fecha" type="date"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 6 · CIERRE ===== -->
+      <div class="etapa" data-etapa="6" data-state="pendiente">
+        <button class="eh" data-abrir="6"><span class="n">6</span><h3>Cierre</h3><span class="hint">Lee lo que corresponde</span></button>
+        <div class="eb" id="eb6" hidden>
+          <div class="say" id="say-cierre"><span class="tag">Agente</span></div>
+          <div class="fld" id="caja-wa" hidden>
+            <label class="lb" id="lb-wa">Mensaje de WhatsApp</label>
+            <div class="out" id="msg-wa"></div>
+            <div class="row"><button class="btn sm" data-copiar="msg-wa">Copiar mensaje</button></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== OBJECIONES ===== -->
+      <details class="etapa" id="panel-objeciones">
+        <summary class="eh" style="cursor:pointer;list-style:none"><span class="n">!</span><h3>Respuestas a objeciones</h3><span class="hint">Úsalo en cualquier momento</span></summary>
+        <div class="eb" id="lista-objeciones"></div>
+      </details>
+
+      <!-- ===== GUARDAR ===== -->
+      <div class="etapa" style="border-top:1px solid var(--line)">
+        <div class="eb" style="padding-top:1rem">
+          <div class="fin" id="fin-llamada" hidden>
+            <span class="ic">✓</span>
+            <div><h4 id="fin-titulo"></h4><p id="fin-detalle"></p></div>
+          </div>
+          <div class="veredicto"><span class="badge b-sincontacto" id="clas-badge">Sin clasificar</span><p id="clas-texto">Abre un lead para empezar. La clasificación sale de su interés actual y del siguiente paso acordado.</p></div>
+          <div class="fld">
+            <label class="lb" for="f-resumen">Notas relevantes para el asesor</label>
+            <textarea id="f-resumen" placeholder="Dos o tres líneas: qué quiere, qué lo detuvo y qué se acordó."></textarea>
+            <div class="row"><button class="btn sm ghost" id="btn-sugerir">Sugerir notas con lo capturado</button></div>
+          </div>
+          <div class="row">
+            <button class="btn" id="btn-guardar" disabled>Guardar y pasar al siguiente</button>
+            <button class="btn ghost" id="btn-limpiar">Cancelar sin guardar</button>
+            <span class="nota" id="estado-guardado"></span>
+          </div>
+          <p class="nota">Guardar escribe la llamada en la hoja y deja la consola lista para el siguiente lead. Cancelar borra lo capturado y no escribe nada.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= FICHA ================= -->
+  <section class="panel">
+    <header>
+      <h2>Ficha para el asesor</h2>
+      <div class="row"><button class="btn sm" data-copiar="ficha-texto">Copiar ficha</button></div>
+    </header>
+    <div class="ficha" id="ficha"></div>
+    <div class="leyenda">
+      <span>Confirmado: dato obtenido en la llamada</span>
+      <span style="color:var(--warn)">Por verificar: queda pendiente</span>
+      <span><i>No se preguntó</i>: no se tocó el tema</span>
+    </div>
+    <div class="eb" style="padding-bottom:1.1rem"><div class="out" id="ficha-texto"></div></div>
+  </section>
+
+  <p class="nota" style="text-align:center">Una pregunta a la vez. Escucha antes de continuar. No prometas montos de crédito ni pagos específicos. No pidas NSS, CURP, contraseñas ni códigos en esta llamada.</p>
+</main>
+
+<script>
+/* =====================================================================
+   Lógica pura del guion: textos, ramas, clasificación y ficha.
+   Expuesta en window.RDA para poder probarla sin navegador.
+   ===================================================================== */
+(function (raiz) {
+  "use strict";
+
+  var DIAS  = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  var MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+  /* Motivos por los que no compró, con la pregunta que les toca en la etapa 3. */
+  var MOTIVOS = [
+    { cat:'Crédito',             pregunta:'¿Actualmente está trabajando y cotizando en el IMSS?', campo:'cotiza' },
+    { cat:'Precio',              pregunta:'¿Le preocupaba el precio total o el pago mensual?',    campo:'precioFoco' },
+    { cat:'Ubicación',           pregunta:'¿Qué zona estaría buscando ahora?',                    campo:'zonaBuscada' },
+    { cat:'Pareja o familia',    pregunta:'¿Sigue siendo una decisión que tomaría junto con ellos?', campo:'decisionPareja' },
+    { cat:'Documentos',          pregunta:'¿Ese pendiente sigue sin resolverse?',                 campo:'documentosPendientes' },
+    { cat:'Falta de seguimiento',pregunta:'¿Qué información le hizo falta para avanzar?',         campo:'infoFaltante' },
+    { cat:'No era el momento',   pregunta:'¿Y hoy sería un mejor momento para usted?',            campo:'detalleCambio' },
+    { cat:'Otro',                pregunta:'',                                                      campo:'detalleCambio' }
+  ];
+
+  /* Objeciones tal como se responden. */
+  var OBJECIONES = [
+    { id:'nointeresa', t:'No me interesa',
+      r:'Entiendo, gracias por atenderme. Actualizamos el registro para respetar su decisión. Que tenga buena tarde.',
+      n:'Cierra. Marca «ya no quiere comprar» en la etapa 4.' },
+    { id:'sindinero', t:'No tengo dinero',
+      r:'Comprendo. Si le interesa, podemos revisar primero qué opciones serían realistas para usted, sin asegurarle un crédito. ¿Le serviría esa orientación?',
+      n:'No ofrezcas montos ni pagos.' },
+    { id:'nocredito', t:'No me alcanza el crédito',
+      r:'¿Eso lo confirmó recientemente o fue lo que sucedió cuando nos contactó la primera vez?',
+      n:'Si fue hace tiempo, ofrece orientación para que verifique su situación actual, sin prometer que ahora califica.' },
+    { id:'otrainmo', t:'Estoy viendo una casa con otra inmobiliaria',
+      r:'Entiendo. ¿Ya está por cerrar o todavía está comparando opciones?',
+      n:'Si sigue comparando, ofrece información de Real del Alba solo si le interesa.' },
+    { id:'mandeinfo', t:'Mándeme información por WhatsApp',
+      r:'Claro. ¿Qué le gustaría conocer primero: precios, ubicación o características?',
+      n:'Regístralo en la etapa 5, en «solo quiere información».' },
+    { id:'minumero', t:'¿Cómo consiguieron mi número?', r:'', n:'No inventes el origen del registro.' },
+    { id:'infonavit', t:'¿Es una llamada de Infonavit?',
+      r:'No, le llamo de Real del Alba, en Villagrán. Queremos saber si sigue interesado en comprar y, si lo desea, orientarle sobre cómo revisar sus opciones.', n:'' },
+    { id:'nss', t:'¿Para qué necesita mi NSS o CURP?',
+      r:'Para esta llamada no necesito esos datos. Si posteriormente se requieren para una revisión, le explicaremos el procedimiento y cómo compartirlos de forma segura.', n:'' },
+    { id:'nocotiza', t:'No cotizo en el IMSS',
+      r:'Gracias por aclarármelo. Si sigue interesado en comprar, podemos consultar qué alternativas podrían aplicar a su situación, sin asegurarle que califica. ¿Le gustaría recibir orientación?', n:'' },
+    { id:'sintiempo', t:'No tengo tiempo',
+      r:'Claro. ¿Prefiere que le marque en otro momento o que le envíe información por WhatsApp?', n:'' }
+  ];
+
+  function limpio(v) { return (v === null || v === undefined) ? '' : String(v).trim(); }
+  function esc(s) {
+    return limpio(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function nombreCorto(n) {
+    var p = limpio(n).split(/\s+/).filter(Boolean);
+    return p.length ? p.slice(0, 2).join(' ') : '';
+  }
+  function fechaLarga(iso, hora) {
+    var m = limpio(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return '';
+    var d = new Date(+m[1], +m[2] - 1, +m[3]);
+    var t = DIAS[d.getDay()] + ' ' + d.getDate() + ' de ' + MESES[d.getMonth()];
+    if (hora) t += ' a las ' + hora12(hora);
+    return t;
+  }
+  function hora12(h) {
+    var m = limpio(h).match(/^(\d{1,2}):(\d{2})/);
+    if (!m) return limpio(h);
+    var hh = +m[1], mm = m[2];
+    var suf = hh < 12 ? 'de la mañana' : (hh < 19 ? 'de la tarde' : 'de la noche');
+    var h12 = hh % 12; if (h12 === 0) h12 = 12;
+    return h12 + (mm !== '00' ? ':' + mm : '') + ' ' + suf;
+  }
+  function motivoDe(cat) {
+    for (var i = 0; i < MOTIVOS.length; i++) if (MOTIVOS[i].cat === cat) return MOTIVOS[i];
+    return null;
+  }
+
+  /* ---------------- 1 · apertura ---------------- */
+  function guionApertura(s) {
+    var n = nombreCorto(s.nombre), ag = limpio(s.quien), anio = limpio(s.anio);
+    var l1 = n ? 'Buenas tardes, ¿hablo con <b>' + esc(n) + '</b>?'
+               : 'Buenas tardes, ¿con quién tengo el gusto?';
+    var l2 = 'Qué tal, soy ' + (ag ? '<b>' + esc(ag) + '</b>' : '<b>[di tu nombre]</b>') +
+             ', de Real del Alba, el desarrollo de vivienda en Villagrán.';
+    var l3 = 'Le llamo porque ' + (anio ? 'en <b>' + esc(anio) + '</b> ' : 'hace tiempo ') +
+             'nos pidió informes sobre nuestras casas. Quería saber si ya encontró vivienda o si todavía está buscando. <b>¿Tiene un minuto para platicar?</b>';
+    return { html: l1 + ' ' + l2 + ' ' + l3,
+             alterno: n ? '' : 'Si te da su nombre, captúralo arriba y el resto del guion se ajusta solo.' };
+  }
+
+  function guionNoRecuerda(s) {
+    var anio = limpio(s.anio);
+    return 'No se preocupe, fue hace tiempo. Tenemos registrado que ' +
+      (anio ? 'en <b>' + esc(anio) + '</b> ' : '') +
+      'solicitó informes sobre vivienda. Solo quería saber si todavía considera comprar casa.';
+  }
+
+  /* ---------------- 5 · cita ---------------- */
+  function guionCita(s) {
+    var as = limpio(s.asesor);
+    return 'Por lo que me comenta, valdría la pena revisar sus opciones actuales. Mi compañero ' +
+      (as ? '<b>' + esc(as) + '</b>' : '<b>[asesor]</b>') +
+      ' puede orientarle sobre las viviendas disponibles y los pasos para revisar su situación con Infonavit. ' +
+      '<b>¿Le parece bien que le programe una llamada con él?</b>';
+  }
+  function guionHorarios(s) {
+    var a = limpio(s.alt1), b = limpio(s.alt2);
+    if (a && b) return 'Perfecto. <b>¿Qué le queda mejor: ' + esc(a) + ' o ' + esc(b) + '?</b>';
+    return 'Perfecto. <b>¿Qué le queda mejor:</b> ofrécele dos horarios concretos y anótalos abajo.';
+  }
+  function guionConfirma(s) {
+    var cuando = fechaLarga(s.citaFecha, s.citaHora), as = limpio(s.asesor);
+    if (!cuando) return '';
+    return 'Entonces queda para el <b>' + esc(cuando) + '</b>' + (as ? ' con <b>' + esc(as) + '</b>' : '') + '.';
+  }
+
+  /* ---------------- 6 · cierre ---------------- */
+  function guionCierre(bruto) {
+    var s = normalizar(bruto);
+    if (s.recuerda === 'niega') {
+      return 'Disculpe la molestia. Voy a reportar el registro para que lo revisemos. Gracias por atenderme.';
+    }
+    if (s.resultado === 'reagendar') {
+      var r = fechaLarga(s.reagendaFecha, s.reagendaHora);
+      return r ? 'De acuerdo, le marcaré el <b>' + esc(r) + '</b>, como quedamos. Gracias por su tiempo.'
+               : 'De acuerdo, le marco cuando me indique. Gracias por su tiempo.';
+    }
+    if (s.situacion === 'ya_compro' && s.yaNoNecesita === 'si') {
+      return 'Me da mucho gusto. Actualizo el registro para no volver a molestarle con esto. Que tenga buena tarde.';
+    }
+    if (s.intencion === 'no' || s.noContactar === 'si') {
+      return 'Entiendo. Gracias por aclarármelo. Que tenga buena tarde.';
+    }
+    var cita = fechaLarga(s.citaFecha, s.citaHora);
+    if (cita) {
+      var as = limpio(s.asesor);
+      return 'Perfecto, entonces ' + (as ? '<b>' + esc(as) + '</b>' : 'mi compañero') +
+        ' le marcará el <b>' + esc(cita) + '</b>.' +
+        (s.whatsappOk === 'si' ? ' Le envío la confirmación por WhatsApp.' : '') +
+        ' Muchas gracias por su tiempo.';
+    }
+    var prox = fechaLarga(s.proximaFecha);
+    if (prox) return 'De acuerdo, le marcaré el <b>' + esc(prox) + '</b>, como quedamos. Gracias por su tiempo.';
+    if (s.aceptaCita === 'solo_info' && s.autorizaEnvio === 'si') {
+      return 'Con gusto le mando la información por WhatsApp. Quedamos pendientes. Gracias por su tiempo.';
+    }
+    return 'Le agradezco mucho su tiempo. Que tenga buena tarde.';
+  }
+
+  /* ---------------- normalización ----------------
+     Deja en blanco todo lo que no corresponde a la rama que tomó la
+     llamada. Es la red de seguridad: aunque la pantalla deje un valor
+     viejo en memoria, ni la ficha ni la hoja lo ven. */
+  function normalizar(s) {
+    var n = {};
+    Object.keys(s).forEach(function (k) { n[k] = s[k]; });
+    function borra() {
+      for (var i = 0; i < arguments.length; i++) {
+        n[arguments[i]] = (arguments[i] === 'objeciones') ? [] : '';
+      }
+    }
+
+    if (n.resultado !== 'reagendar') borra('reagendaFecha', 'reagendaHora');
+
+    if (n.resultado !== 'contactado') {
+      borra('recuerda', 'situacion', 'yaNoNecesita', 'buscaOtra',
+            'motivoCategoria', 'motivoHistorico', 'motivoVigente', 'detalleCambio',
+            'cotiza', 'precioFoco', 'zonaBuscada', 'decisionPareja', 'documentosPendientes', 'infoFaltante',
+            'intencion', 'prioridad', 'vivienda', 'rentaIntencion', 'rentaMonto', 'plazo', 'aceptaSeguimiento',
+            'aceptaCita', 'alt1', 'alt2', 'citaFecha', 'citaHora', 'whatsappOk',
+            'viaSinCita', 'temaInfo', 'autorizaEnvio', 'proximaAccion', 'proximaFecha', 'noContactar');
+      return n;
+    }
+
+    if (!n.recuerda || n.recuerda === 'niega') {
+      borra('situacion', 'yaNoNecesita', 'buscaOtra',
+            'motivoCategoria', 'motivoHistorico', 'motivoVigente', 'detalleCambio',
+            'cotiza', 'precioFoco', 'zonaBuscada', 'decisionPareja', 'documentosPendientes', 'infoFaltante',
+            'intencion', 'prioridad', 'vivienda', 'rentaIntencion', 'rentaMonto', 'plazo', 'aceptaSeguimiento',
+            'aceptaCita', 'alt1', 'alt2', 'citaFecha', 'citaHora', 'whatsappOk',
+            'viaSinCita', 'temaInfo', 'autorizaEnvio', 'proximaAccion', 'proximaFecha', 'noContactar');
+      return n;
+    }
+
+    if (n.situacion !== 'ya_compro') borra('yaNoNecesita', 'buscaOtra');
+    /* El motivo histórico solo se pregunta a quien sigue buscando. */
+    if (n.situacion !== 'sigue_buscando') {
+      borra('motivoCategoria', 'motivoHistorico', 'motivoVigente', 'detalleCambio',
+            'cotiza', 'precioFoco', 'zonaBuscada', 'decisionPareja', 'documentosPendientes', 'infoFaltante');
+    } else {
+      if (n.motivoCategoria !== 'Crédito') borra('cotiza');
+      if (n.motivoCategoria !== 'Precio') borra('precioFoco');
+      if (n.motivoCategoria !== 'Ubicación') borra('zonaBuscada');
+      if (n.motivoCategoria !== 'Pareja o familia') borra('decisionPareja');
+      if (n.motivoCategoria !== 'Documentos') borra('documentosPendientes');
+      if (n.motivoCategoria !== 'Falta de seguimiento') borra('infoFaltante');
+    }
+
+    var cerrado = n.situacion === 'ya_compro' && (n.yaNoNecesita === 'si' || n.buscaOtra === 'no');
+    if (!n.situacion || cerrado) {
+      borra('intencion', 'prioridad', 'vivienda', 'rentaIntencion', 'rentaMonto', 'plazo', 'aceptaSeguimiento',
+            'aceptaCita', 'alt1', 'alt2', 'citaFecha', 'citaHora', 'whatsappOk',
+            'viaSinCita', 'temaInfo', 'autorizaEnvio', 'proximaAccion', 'proximaFecha', 'noContactar');
+      return n;
+    }
+
+    if (n.intencion !== 'sigue') borra('prioridad');
+    if (n.intencion !== 'despues') borra('plazo', 'aceptaSeguimiento');
+    if (n.intencion !== 'no') borra('noContactar');
+    if (n.intencion !== 'sigue' && n.intencion !== 'despues') {
+      borra('vivienda', 'rentaIntencion', 'rentaMonto',
+            'aceptaCita', 'alt1', 'alt2', 'citaFecha', 'citaHora', 'whatsappOk',
+            'viaSinCita', 'temaInfo', 'autorizaEnvio', 'proximaAccion', 'proximaFecha');
+      return n;
+    }
+    if (n.vivienda !== 'renta') borra('rentaIntencion', 'rentaMonto');
+
+    if (n.aceptaCita !== 'si') borra('alt1', 'alt2', 'citaFecha', 'citaHora', 'whatsappOk');
+    if (n.aceptaCita !== 'no') borra('viaSinCita');
+    if (!(n.aceptaCita === 'solo_info' || (n.aceptaCita === 'no' && n.viaSinCita === 'info'))) {
+      borra('temaInfo', 'autorizaEnvio');
+    }
+    var tienePaso = (n.aceptaCita === 'no' && n.viaSinCita === 'otra_fecha') ||
+                    (n.intencion === 'despues' && n.aceptaSeguimiento === 'si') ||
+                    n.aceptaCita === 'solo_info';
+    if (!tienePaso) borra('proximaAccion', 'proximaFecha');
+
+    return n;
+  }
+
+  /* ---------------- fin de la llamada ----------------
+     Dice en voz alta cuándo ya no hay más pasos, para que no haya que
+     adivinarlo. Devuelve null mientras la llamada siga abierta. */
+  function estadoFinal(bruto) {
+    var s = normalizar(bruto);
+    if (!s.resultado) return null;
+    if (s.resultado === 'equivocado')  return { titulo:'Número equivocado', detalle:'No hay nada más que preguntar. Guarda para dejarlo registrado.' };
+    if (s.resultado === 'no_contesto') return { titulo:'No contestó', detalle:'Queda registrado el intento. Guarda y pasa al siguiente lead.' };
+    if (s.resultado === 'reagendar') {
+      return limpio(s.reagendaFecha)
+        ? { titulo:'Quedó de marcarle después', detalle:'Guarda para que quede la fecha acordada.' }
+        : null;
+    }
+    if (s.recuerda === 'niega') return { titulo:'Niega haber solicitado informes', detalle:'Al guardar, el registro queda marcado para revisión.' };
+    if (s.situacion === 'ya_compro' && s.yaNoNecesita === 'si') return { titulo:'Ya compró y no necesita información', detalle:'Se cierra el seguimiento. Guarda y pasa al siguiente.' };
+    if (s.situacion === 'ya_compro' && s.buscaOtra === 'no') return { titulo:'Ya compró y no considera otra', detalle:'Se cierra el seguimiento. Guarda y pasa al siguiente.' };
+    if (s.intencion === 'no') return { titulo:'Ya no quiere comprar', detalle:'Se respeta su decisión. Guarda y pasa al siguiente.' };
+    if (citaCompleta(s)) return { titulo:'Cita agendada', detalle:'Guarda y manda el WhatsApp si lo autorizó.' };
+    if (s.aceptaCita === 'solo_info' && s.autorizaEnvio) return { titulo:'Quedó de mandarle información', detalle:'Guarda y envía el mensaje si autorizó.' };
+    if (s.aceptaCita === 'no' && s.viaSinCita === 'otra_fecha' && limpio(s.proximaFecha)) return { titulo:'Quedó de volver a marcarle', detalle:'Guarda para que la fecha quede en la hoja.' };
+    return null;
+  }
+
+  /* ---------------- clasificación ---------------- */
+  function citaCompleta(s) { return !!(limpio(s.citaFecha) && limpio(s.citaHora) && limpio(s.asesor)); }
+  function pasoConcreto(s) { return !!(limpio(s.proximaAccion) && limpio(s.proximaFecha)); }
+
+  function clasificar(bruto) {
+    var s = normalizar(bruto);
+    if (s.resultado === 'equivocado') return 'rojo';
+    if (s.recuerda === 'niega') return 'rojo';
+    if (s.noContactar === 'si') return 'rojo';
+    if (s.intencion === 'no') return 'rojo';
+    if (s.situacion === 'ya_compro' && (s.yaNoNecesita === 'si' || s.buscaOtra === 'no')) return 'rojo';
+    if (!s.resultado || s.resultado === 'no_contesto' || s.resultado === 'reagendar') return 'sincontacto';
+    if (!s.intencion) return 'sincontacto';
+    if (s.intencion === 'sigue' && (citaCompleta(s) || pasoConcreto(s))) return 'verde';
+    return 'amarillo';
+  }
+
+  var ETIQ_CLAS = {
+    verde:'Activo', amarillo:'Seguimiento posterior', rojo:'Sin oportunidad', sincontacto:'Sin contacto efectivo'
+  };
+
+  function razonClasificacion(bruto) {
+    var s = normalizar(bruto);
+    var c = clasificar(s);
+    if (c === 'verde') return 'Sigue con planes y hay un siguiente paso con día y hora. Pásalo al asesor hoy mismo.';
+    if (c === 'rojo') {
+      if (s.recuerda === 'niega') return 'Niega haber pedido informes. Se marca para revisión y no se le vuelve a marcar hasta aclararlo.';
+      if (s.situacion === 'ya_compro') return 'Ya compró y no busca otra vivienda. Se cierra el seguimiento.';
+      if (s.noContactar === 'si') return 'Pidió que ya no se le contacte. Queda bloqueado en la cola.';
+      return 'Ya no quiere comprar. Se actualiza el registro y se respeta su decisión.';
+    }
+    if (c === 'sincontacto') {
+      if (s.resultado === 'reagendar') return 'Quedó de marcarse después. Todavía no hay con qué clasificarlo.';
+      if (s.resultado === 'no_contesto') return 'No contestó. Vuelve a intentar en otro horario.';
+      return 'Falta confirmar su interés actual.';
+    }
+    if (s.intencion === 'despues') {
+      return 'Lo considera más adelante.' + (limpio(s.proximaFecha) ? ' Ya tiene fecha de seguimiento.' : ' Acuerda una fecha solo si él la propone.');
+    }
+    if (s.aceptaCita === 'solo_info') return 'Solo quiere información. Mándala si autorizó y retoma después.';
+    return 'Sigue interesado pero no hay cita ni fecha de seguimiento. En cuanto captures día, hora y asesor, pasa a activo.';
+  }
+
+  /* ---------------- WhatsApp ---------------- */
+  var TEMAS = { precios:'precios', ubicacion:'ubicación', caracteristicas:'características de las viviendas' };
+
+  /** A · cita confirmada. */
+  function msgCita(bruto) {
+    var s = normalizar(bruto);
+    if (s.whatsappOk !== 'si') return '';
+    var n = nombreCorto(s.nombre), ag = limpio(s.quien), as = limpio(s.asesor);
+    var cuando = fechaLarga(s.citaFecha, s.citaHora);
+    var l = 'Hola' + (n ? ', ' + n : '') + '.' + (ag ? ' Soy ' + ag + ', de Real del Alba.' : ' Le escribo de Real del Alba.');
+    l += ' Como acordamos, ' + (as || 'mi compañero') + ' le marcará' + (cuando ? ' el ' + cuando : '') +
+         ' para orientarle sobre las opciones de vivienda y cómo revisar su situación actual.';
+    l += '\n\nSi necesita cambiar el horario, puede responderme por aquí. Saludos.';
+    return l;
+  }
+
+  /** B · información solicitada. */
+  function msgInfo(bruto) {
+    var s = normalizar(bruto);
+    if (s.aceptaCita !== 'solo_info' && s.viaSinCita !== 'info') return '';
+    if (s.autorizaEnvio !== 'si') return '';
+    var n = nombreCorto(s.nombre), ag = limpio(s.quien);
+    var tema = TEMAS[s.temaInfo] || 'las viviendas';
+    return 'Hola' + (n ? ', ' + n : '') + '.' + (ag ? ' Soy ' + ag + ', de Real del Alba.' : ' Le escribo de Real del Alba.') +
+      ' Como acordamos, le comparto la información sobre ' + tema + ': [pega aquí el enlace o la información verificada].' +
+      '\n\nPuede revisarla con calma. Quedamos pendientes si desea conocer más detalles.';
+  }
+
+  function msgIntento(s) {
+    var n = nombreCorto(s.nombre), ag = limpio(s.quien);
+    return (n ? n + ', b' : 'B') + 'uen día. Le marqué de Real del Alba, el desarrollo de vivienda en Villagrán. ' +
+      'Le busco porque hace tiempo nos pidió informes y queríamos saber si todavía está buscando casa. ¿Le marco más tarde?' +
+      (ag ? '\n\n' + ag + '\nReal del Alba' : '');
+  }
+
+  /** Respuesta a «¿cómo consiguieron mi número?», con el origen real del registro. */
+  function respuestaOrigen(s) {
+    var anio = limpio(s.anio), origen = limpio(s.origen);
+    var ref = [];
+    if (anio) ref.push('de ' + anio);
+    if (origen) ref.push('por ' + origen);
+    return 'Tenemos un registro relacionado con una solicitud de informes' +
+      (ref.length ? ' ' + ref.join(', ') : '') +
+      '. Si prefiere que no le contactemos, lo actualizo para respetar su decisión.';
+  }
+
+  /* ---------------- ficha ---------------- */
+  var ETIQ = {
+    resultado:{ contactado:'Contestó', reagendar:'Está ocupado, pidió otra hora', no_contesto:'No contestó', equivocado:'Número equivocado' },
+    recuerda:{ si:'Recuerda Real del Alba', no:'No lo recordaba', niega:'Niega haber solicitado informes' },
+    situacion:{ ya_compro:'Ya compró', sigue_buscando:'Sigue buscando' },
+    intencion:{ sigue:'Sigue buscando', despues:'Más adelante', no:'No interesado' },
+    vigente:{ sigue:'Sigue siendo obstáculo', cambio:'Su situación cambió' },
+    cotiza:{ si:'Sí', no:'No', nose:'No sabe' },
+    vivienda:{ renta:'Renta', familiares:'Con familiares', propia:'Propia', otra:'Otra' },
+    prioridad:{ credito:'Conocer sus opciones de crédito', precio:'Encontrar un precio que le convenga', ubicacion:'Encontrar una ubicación adecuada' },
+    precioFoco:{ total:'El precio total', mensual:'El pago mensual' },
+    rentaIntencion:{ dejar_rentar:'Quiere comprar para dejar de rentar', comparando:'Todavía compara opciones' },
+    aceptaCita:{ si:'Aceptó la cita', no:'No quiso agendar todavía', solo_info:'Solo quiere información' },
+    viaSinCita:{ info:'Información por WhatsApp', otra_fecha:'Retomar en otra fecha' },
+    temaInfo:{ precios:'Precios', ubicacion:'Ubicación', caracteristicas:'Características' },
+    siNo:{ si:'Sí', no:'No' }
+  };
+
+  function campo(label, valor, estado) {
+    return { label: label, valor: limpio(valor), estado: estado || (limpio(valor) ? 'ok' : 'vacio') };
+  }
+  function si(cond, c) { return cond ? c : null; }
+
+  /** Obstáculo actual en una línea, con el detalle de la pregunta condicional. */
+  function obstaculoActual(bruto) {
+    var s = normalizar(bruto);
+    if (!s.motivoVigente) return '';
+    var base = ETIQ.vigente[s.motivoVigente] || '';
+    var d = [];
+    if (s.cotiza) d.push('cotiza en IMSS: ' + (ETIQ.cotiza[s.cotiza] || ''));
+    if (s.precioFoco) d.push('le preocupa ' + (ETIQ.precioFoco[s.precioFoco] || '').toLowerCase());
+    if (limpio(s.zonaBuscada)) d.push('busca zona: ' + limpio(s.zonaBuscada));
+    if (s.decisionPareja) d.push(s.decisionPareja === 'si' ? 'decide con su pareja o familia' : 'ya decide solo');
+    if (s.documentosPendientes) d.push(s.documentosPendientes === 'si' ? 'documentos siguen pendientes' : 'documentos ya resueltos');
+    if (limpio(s.infoFaltante)) d.push('le faltó: ' + limpio(s.infoFaltante));
+    if (limpio(s.detalleCambio)) d.push(limpio(s.detalleCambio));
+    return base + (d.length ? ' — ' + d.join('; ') : '');
+  }
+
+  function ficha(bruto) {
+    var s = normalizar(bruto);
+    var hablo = s.resultado === 'contactado';
+    var niega = s.recuerda === 'niega';
+    var compro = s.situacion === 'ya_compro';
+    var cerrado = compro && (s.yaNoNecesita === 'si' || s.buscaOtra === 'no');
+    var explora = hablo && !niega && !cerrado && s.intencion !== 'no';
+    var c = clasificar(s);
+
+    var A = [
+      campo('Nombre', s.nombre),
+      campo('Teléfono', s.telefono),
+      campo('Año en que solicitó informes', s.anio),
+      campo('Proyecto', s.proyecto || 'Real del Alba')
+    ];
+
+    var B = [
+      campo('Resultado de la llamada', ETIQ.resultado[s.resultado] || ''),
+      si(hablo, campo('Recuerda el proyecto', ETIQ.recuerda[s.recuerda] || '', niega ? 'pend' : undefined)),
+      si(hablo && !niega, campo('Situación actual', ETIQ.situacion[s.situacion] || '')),
+      si(compro, campo('¿Busca otra vivienda?', s.yaNoNecesita === 'si' ? 'No, ya no necesita nada' : (ETIQ.siNo[s.buscaOtra] || ''))),
+      si(explora, campo('Interés hoy', ETIQ.intencion[s.intencion] || '')),
+      si(explora, campo('Cotización laboral', ETIQ.cotiza[s.cotiza] || '', s.cotiza === 'nose' ? 'pend' : undefined)),
+      si(s.intencion === 'despues', campo('Plazo que mencionó', s.plazo)),
+      si(explora, campo('Situación de vivienda', ETIQ.vivienda[s.vivienda] || '')),
+      si(s.vivienda === 'renta', campo('Sobre la renta', [ETIQ.rentaIntencion[s.rentaIntencion] || '', limpio(s.rentaMonto) ? 'paga $' + limpio(s.rentaMonto) : ''].filter(Boolean).join(' · ')))
+    ];
+
+    var C = [
+      si(hablo && !niega && !compro, campo('Motivo por el que no compró', s.motivoHistorico || s.motivoCategoria)),
+      si(hablo && !niega && !compro, campo('Categoría del motivo', s.motivoCategoria)),
+      si(hablo && !niega && !compro, campo('Principal obstáculo actual', obstaculoActual(s), s.motivoVigente === 'sigue' ? 'pend' : undefined)),
+      si(explora, campo('Qué necesita resolver', ETIQ.prioridad[s.prioridad] || '')),
+      campo('Clasificación', ETIQ_CLAS[c], c === 'sincontacto' ? 'pend' : 'ok')
+    ];
+
+    var citaTxt = fechaLarga(s.citaFecha, s.citaHora);
+    var estadoCita = citaTxt ? 'ok' : (s.aceptaCita === 'si' ? 'pend' : 'vacio');
+    var D = [
+      si(explora, campo('Respuesta a la cita', ETIQ.aceptaCita[s.aceptaCita] || '')),
+      si(s.aceptaCita === 'si', campo('Asesor asignado', s.asesor, limpio(s.asesor) ? undefined : 'pend')),
+      si(s.aceptaCita === 'si', campo('Cita', citaTxt || 'Aceptó, falta confirmar día y hora', estadoCita)),
+      si(s.aceptaCita === 'si', campo('Horarios ofrecidos', [limpio(s.alt1), limpio(s.alt2)].filter(Boolean).join(' · '))),
+      si(s.aceptaCita === 'no', campo('Qué prefirió', ETIQ.viaSinCita[s.viaSinCita] || '')),
+      si(s.aceptaCita === 'solo_info' || s.viaSinCita === 'info',
+         campo('Información solicitada', ETIQ.temaInfo[s.temaInfo] || '')),
+      si(s.aceptaCita === 'solo_info' || s.viaSinCita === 'info',
+         campo('Autorizó el envío', ETIQ.siNo[s.autorizaEnvio] || '', s.autorizaEnvio === 'no' ? 'pend' : undefined)),
+      si(s.aceptaCita === 'si', campo('Confirmación por WhatsApp', ETIQ.siNo[s.whatsappOk] || '')),
+      si(!citaTxt, campo('Próxima acción', s.proximaAccion)),
+      si(!citaTxt, campo('Fecha de la próxima acción', fechaLarga(s.proximaFecha) || '')),
+      si(s.resultado === 'reagendar', campo('Volver a marcar', fechaLarga(s.reagendaFecha, s.reagendaHora) || '')),
+      si(s.intencion === 'no' || s.noContactar === 'si' || niega,
+         campo('No contactar', s.noContactar === 'si' ? 'Lo pidió expresamente' : 'No lo pidió')),
+      si(niega, campo('Requiere revisión', 'Niega haber solicitado informes', 'pend')),
+      campo('Notas relevantes', s.resumen)
+    ];
+
+    return [
+      { titulo:'A · Datos de contacto', campos:A.filter(Boolean) },
+      { titulo:'B · Situación actual',  campos:B.filter(Boolean) },
+      { titulo:'C · Oportunidad',       campos:C.filter(Boolean) },
+      { titulo:'D · Siguiente paso',    campos:D.filter(Boolean) }
+    ];
+  }
+
+  function fichaTexto(s) {
+    var out = ['LEAD DE RECONTACTO — REAL DEL ALBA'];
+    if (limpio(s.idLead)) out.push('Lead ' + s.idLead + (limpio(s.quien) ? ' · agente ' + s.quien : ''));
+    ficha(s).forEach(function (b) {
+      out.push('');
+      out.push(b.titulo.toUpperCase());
+      b.campos.forEach(function (f) {
+        var v = f.estado === 'vacio' ? 'no preguntado' : f.valor;
+        if (f.estado === 'pend' && f.valor) v = f.valor + ' (por verificar)';
+        out.push('  ' + f.label + ': ' + v);
+      });
+    });
+    return out.join('\n');
+  }
+
+  /* ---------------- notas sugeridas ---------------- */
+  function resumenSugerido(bruto) {
+    var s = normalizar(bruto);
+    var f = [];
+    if (s.recuerda === 'no') f.push('No recordaba el proyecto.');
+    if (s.recuerda === 'niega') f.push('Niega haber solicitado informes; registro para revisión.');
+    if (s.situacion === 'ya_compro') {
+      f.push(s.buscaOtra === 'si' ? 'Ya compró, pero considera comprar otra vivienda.' : 'Ya compró casa.');
+    }
+    if (s.intencion === 'sigue') f.push('Sigue con planes de comprar.');
+    if (s.intencion === 'despues') f.push('Lo retomaría más adelante' + (limpio(s.plazo) ? ': ' + limpio(s.plazo) : '') + '.');
+    if (s.intencion === 'no') f.push('Ya no quiere comprar.');
+
+    var motivo = limpio(s.motivoHistorico) || limpio(s.motivoCategoria);
+    if (motivo) {
+      var cierre = s.motivoVigente === 'cambio' ? ' Su situación ya cambió.'
+                 : (s.motivoVigente === 'sigue' ? ' Sigue siendo obstáculo.' : '');
+      f.push('Antes no compró por: ' + motivo.replace(/\.*$/, '') + '.' + cierre);
+    }
+    var obs = obstaculoActual(s);
+    if (obs && obs.indexOf('—') > -1) f.push(obs.split('—')[1].trim().replace(/^./, function (x) { return x.toUpperCase(); }) + '.');
+    if (s.prioridad) f.push('Lo más importante para él: ' + (ETIQ.prioridad[s.prioridad] || '').toLowerCase() + '.');
+    if (s.vivienda) {
+      var v = ETIQ.vivienda[s.vivienda];
+      if (s.vivienda === 'renta' && s.rentaIntencion) v += ', ' + (ETIQ.rentaIntencion[s.rentaIntencion] || '').toLowerCase();
+      f.push('Vivienda: ' + v + '.');
+    }
+    var cita = fechaLarga(s.citaFecha, s.citaHora);
+    if (cita) f.push('Cita el ' + cita + (limpio(s.asesor) ? ' con ' + limpio(s.asesor) : '') + '.');
+    else if (s.aceptaCita === 'solo_info') f.push('Pidió información de ' + (TEMAS[s.temaInfo] || 'las viviendas') + (s.autorizaEnvio === 'si' ? ', autorizó el envío' : ', sin autorizar envío') + '.');
+    else if (limpio(s.proximaAccion)) f.push('Acordado: ' + limpio(s.proximaAccion).replace(/\.*$/, '') + (fechaLarga(s.proximaFecha) ? ' el ' + fechaLarga(s.proximaFecha) : '') + '.');
+    if (s.noContactar === 'si') f.push('PIDIÓ NO SER CONTACTADO.');
+    return f.join(' ');
+  }
+
+  raiz.RDA = {
+    MOTIVOS:MOTIVOS, OBJECIONES:OBJECIONES, ETIQ:ETIQ, ETIQ_CLAS:ETIQ_CLAS, TEMAS:TEMAS,
+    esc:esc, limpio:limpio, nombreCorto:nombreCorto, fechaLarga:fechaLarga, hora12:hora12, motivoDe:motivoDe,
+    guionApertura:guionApertura, guionNoRecuerda:guionNoRecuerda, guionCita:guionCita,
+    guionHorarios:guionHorarios, guionConfirma:guionConfirma, guionCierre:guionCierre,
+    normalizar:normalizar, estadoFinal:estadoFinal,
+    clasificar:clasificar, razonClasificacion:razonClasificacion, citaCompleta:citaCompleta, pasoConcreto:pasoConcreto,
+    msgCita:msgCita, msgInfo:msgInfo, msgIntento:msgIntento, respuestaOrigen:respuestaOrigen,
+    obstaculoActual:obstaculoActual, ficha:ficha, fichaTexto:fichaTexto, resumenSugerido:resumenSugerido
+  };
+})(typeof window !== 'undefined' ? window : this);
+</script>
+
+<script>
+/* =====================================================================
+   Consola: estado, conexión con Apps Script y comportamiento de la UI.
+   ===================================================================== */
+(function () {
+  "use strict";
+  var R = window.RDA;
+  var $  = function (s) { return document.querySelector(s); };
+  var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+
+  var LS_URL = 'rda_url', LS_QUIEN = 'rda_quien';
+  var urlApi = '', S = null, leadActual = null, leads = [], anioFiltro = '', guardando = false, token = '';
+  var orden = 'hoja', offset = 0, totalCola = 0;
+
+  function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+  /* ---------------- estado ---------------- */
+  function estadoVacio() {
+    return {
+      idLead:'', nombre:'', telefono:'', anio:'', proyecto:'', origen:'', quien:'',
+      resultado:'', reagendaFecha:'', reagendaHora:'', recuerda:'',
+      situacion:'', yaNoNecesita:'', buscaOtra:'',
+      motivoCategoria:'', motivoHistorico:'', motivoVigente:'', detalleCambio:'',
+      cotiza:'', precioFoco:'', zonaBuscada:'', decisionPareja:'', documentosPendientes:'', infoFaltante:'',
+      intencion:'', prioridad:'', vivienda:'', rentaIntencion:'', rentaMonto:'', plazo:'', aceptaSeguimiento:'',
+      aceptaCita:'', alt1:'', alt2:'', citaFecha:'', citaHora:'', asesor:'', whatsappOk:'',
+      viaSinCita:'', temaInfo:'', autorizaEnvio:'',
+      proximaAccion:'', proximaFecha:'', noContactar:'', objeciones:[], resumen:''
+    };
+  }
+  S = estadoVacio();
+
+  function nuevoToken() {
+    try { if (window.crypto && crypto.randomUUID) return 'IX-' + crypto.randomUUID(); } catch (e) {}
+    var r = ''; for (var i = 0; i < 12; i++) r += Math.floor(Math.random() * 36).toString(36);
+    return 'IX-' + Date.now().toString(36) + '-' + r;
+  }
+
+  var toastT = null;
+  function toast(msg, err) {
+    var el = document.createElement('div');
+    el.className = 'toast' + (err ? ' err' : '');
+    el.textContent = msg;
+    document.body.appendChild(el);
+    clearTimeout(toastT);
+    toastT = setTimeout(function () { el.remove(); }, err ? 5200 : 2200);
+  }
+
+  /* ---------------- API ---------------- */
+  function conn(estado, texto) {
+    $('#dot').className = 'dot' + (estado ? ' ' + estado : '');
+    $('#conn-txt').textContent = texto;
+  }
+  function api(cuerpo) {
+    if (!urlApi) return Promise.reject(new Error('Falta la URL del script. Ábrela en «Conexión con Google Sheets».'));
+    return fetch(urlApi, {
+      method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+      body: JSON.stringify(cuerpo), redirect:'follow'
+    }).then(function (res) {
+      if (!res.ok) throw new Error('El script respondió ' + res.status + '. Revisa que esté desplegado con acceso para cualquier usuario.');
+      return res.text();
+    }).then(function (t) {
+      var d;
+      try { d = JSON.parse(t); }
+      catch (e) { throw new Error('La respuesta no es JSON. Suele pasar cuando la URL no termina en /exec o el despliegue pide iniciar sesión.'); }
+      if (!d.ok) throw new Error(d.error || 'El script devolvió un error.');
+      return d;
+    });
+  }
+
+  urlApi = lsGet(LS_URL);
+  $('#cfg-url').value = urlApi;
+  $('#quien').value = lsGet(LS_QUIEN);
+  S.quien = $('#quien').value;
+  if (!urlApi) $('#cfg').open = true;
+
+  $('#cfg-guardar').addEventListener('click', function () {
+    urlApi = $('#cfg-url').value.trim(); lsSet(LS_URL, urlApi);
+    $('#cfg-estado').textContent = urlApi ? 'Guardada en este navegador.' : 'Sin URL.';
+    if (urlApi) probarConexion();
+  });
+  $('#cfg-probar').addEventListener('click', function () {
+    urlApi = $('#cfg-url').value.trim(); lsSet(LS_URL, urlApi); probarConexion();
+  });
+  function probarConexion() {
+    conn('wait', 'Probando…'); $('#cfg-estado').textContent = 'Probando…';
+    return api({ accion:'ping' }).then(function (d) {
+      conn('on', 'Conectado');
+      $('#cfg-estado').textContent = 'Responde bien. Versión ' + d.version + ', hora del servidor ' + d.hora + '.';
+      cargarAsesores(); return true;
+    }).catch(function (e) {
+      conn('off', 'Sin conexión'); $('#cfg-estado').textContent = e.message; return false;
+    });
+  }
+  $('#quien').addEventListener('input', function () {
+    S.quien = $('#quien').value; lsSet(LS_QUIEN, S.quien); pintar();
+  });
+
+  /* ---------------- lista ---------------- */
+  function pintarLista(estado) {
+    var l = $('#lista'); l.innerHTML = '';
+    if (estado === 'cargando') { l.innerHTML = '<div class="cargando">Cargando leads…</div>'; return; }
+    if (!leads.length) {
+      l.innerHTML = '<div class="vacio-estado"><strong>Sin resultados</strong><p>Prueba con otro año, busca por teléfono o vuelve a cargar la cola.</p></div>';
+      $('#leads-sub').textContent = ''; return;
+    }
+    $('#leads-sub').textContent = leads.length + (leads.length === 1 ? ' lead' : ' leads');
+    leads.forEach(function (ld) {
+      var b = document.createElement('button'); b.className = 'lrow'; b.type = 'button';
+      if (leadActual && leadActual.id === ld.id) b.setAttribute('aria-current', 'true');
+      var t = document.createElement('div'); t.className = 't';
+      var nm = document.createElement('span'); nm.className = 'nm';
+      nm.textContent = ld.nombre || (ld.telefono || ld.id);
+      if (!ld.nombre) nm.style.fontStyle = 'italic';
+      var bg = document.createElement('span');
+      var op = ld.oportunidad || '';
+      bg.className = 'badge b-' + (op || 'sincontacto');
+      bg.textContent = op ? (R.ETIQ_CLAS[op] || op) : (ld.clasificacion || '—');
+      t.appendChild(nm); t.appendChild(bg);
+      var mt = document.createElement('span'); mt.className = 'mt';
+      mt.textContent = [ld.id, ld.telefono, ld.anio ? 'informes ' + ld.anio : '', ld.asesor].filter(Boolean).join(' · ');
+      b.appendChild(t); b.appendChild(mt);
+      b.addEventListener('click', function () { abrirLead(ld.id); });
+      l.appendChild(b);
+    });
+  }
+
+  function cargarCola(agregar) {
+    if (!urlApi) { toast('Primero pega la URL del script.', true); $('#cfg').open = true; return; }
+    if (!agregar) { offset = 0; pintarLista('cargando'); }
+    conn('wait', 'Cargando…');
+    api({ accion:'cola', limite:100, offset:offset, anio:anioFiltro, orden:orden }).then(function (d) {
+      conn('on', 'Conectado');
+      totalCola = d.total || 0;
+      leads = agregar ? leads.concat(d.leads || []) : (d.leads || []);
+      offset = leads.length;
+      $('#mas').hidden = !(offset < totalCola);
+      $('#leads-sub').textContent = leads.length + ' de ' + totalCola;
+      pintarLista();
+    }).catch(function (e) {
+      conn('off', 'Sin conexión');
+      if (!agregar) leads = [];
+      pintarLista(); toast(e.message, true);
+    });
+  }
+
+  var tBuscar = null;
+  $('#buscar').addEventListener('input', function () {
+    var q = $('#buscar').value.trim(); clearTimeout(tBuscar);
+    if (q.length < 2) return;
+    tBuscar = setTimeout(function () {
+      pintarLista('cargando');
+      api({ accion:'buscar', q:q, limite:40 })
+        .then(function (d) { leads = d.leads || []; pintarLista(); })
+        .catch(function (e) { leads = []; pintarLista(); toast(e.message, true); });
+    }, 350);
+  });
+  $('#segs').addEventListener('click', function (e) {
+    var b = e.target.closest('.seg'); if (!b) return;
+    anioFiltro = b.getAttribute('data-anio');
+    Array.prototype.forEach.call($('#segs').children, function (c) {
+      c.setAttribute('aria-pressed', c.getAttribute('data-anio') === anioFiltro ? 'true' : 'false');
+    });
+    cargarCola(false);
+  });
+  $('#recargar').addEventListener('click', function () { cargarCola(false); });
+  $('#mas').addEventListener('click', function () { cargarCola(true); });
+  $('#segs-orden').addEventListener('click', function (e) {
+    var b = e.target.closest('.seg'); if (!b) return;
+    orden = b.getAttribute('data-orden');
+    Array.prototype.forEach.call($('#segs-orden').children, function (c) {
+      c.setAttribute('aria-pressed', c.getAttribute('data-orden') === orden ? 'true' : 'false');
+    });
+    cargarCola(false);
+  });
+
+  function cargarAsesores() {
+    api({ accion:'asesores' }).then(function (d) {
+      var dl = $('#dl-asesores'); dl.innerHTML = '';
+      (d.asesores || []).forEach(function (a) {
+        var o = document.createElement('option'); o.value = a; dl.appendChild(o);
+      });
+    }).catch(function () {});
+  }
+
+  /* ---------------- abrir lead ---------------- */
+  function abrirLead(id) {
+    if (guardando) { toast('Espera a que termine de guardar.', true); return; }
+    conn('wait', 'Abriendo lead…');
+    api({ accion:'lead', id:id }).then(function (d) {
+      conn('on', 'Conectado');
+      leadActual = d.lead;
+      limpiarLlamada(true);
+      S.idLead = d.lead.id;
+      S.nombre = d.lead.nombre || '';
+      S.telefono = d.lead.telefono || '';
+      S.anio = d.lead.anio ? String(d.lead.anio) : '';
+      S.proyecto = d.lead.proyecto || 'Real del Alba';
+      S.origen = d.lead.origen || '';
+      S.asesor = d.lead.asesor || '';
+      $('#f-asesor').value = S.asesor;
+      token = nuevoToken();
+      pintarAntecedentes(d.lead);
+      pintarLista();
+      abrirEtapa(1);
+      pintar();
+      $('#panel-llamada').scrollIntoView({ behavior:'smooth', block:'start' });
+    }).catch(function (e) { conn('off', 'Sin conexión'); toast(e.message, true); });
+  }
+
+  function pintarAntecedentes(ld) {
+    $('#ante').hidden = false;
+    var kv = $('#ante-kv'); kv.innerHTML = '';
+    [['Lead', ld.id], ['Teléfono', ld.telefono], ['Informes', ld.anio || '—'], ['Origen', ld.origen || '—'],
+     ['Clasificación', ld.clasificacion || '—'], ['Etapa', ld.etapa || '—'], ['Estatus', ld.estatus || '—'],
+     ['Asesor previo', ld.asesor || '—'], ['Último contacto', ld.ultimoContacto || '—'],
+     ['Días sin mover', ld.diasSinActualizacion || '—']
+    ].forEach(function (p) {
+      var s = document.createElement('span');
+      s.innerHTML = p[0] + ' <b>' + R.esc(p[1]) + '</b>';
+      kv.appendChild(s);
+    });
+    var h = [];
+    if (ld.antecedentes) h.push(ld.antecedentes);
+    if (ld.motivoDescarte) h.push('Motivo de descarte registrado: ' + ld.motivoDescarte);
+    if (ld.accionSiguiente) h.push('Acción siguiente pendiente: ' + ld.accionSiguiente + (ld.fechaProximo ? ' (' + ld.fechaProximo + ')' : ''));
+    (ld.interacciones || []).forEach(function (i) {
+      h.push('[' + (i.Fecha_hora || '') + ' · consola' + (i.Quien_llama ? ' · ' + i.Quien_llama : '') + '] ' +
+        [i.Resultado, i.Interes_actual, i.Notas].filter(Boolean).join(' · '));
+    });
+    $('#ante-hist').textContent = h.length ? h.join('\n\n') : 'Sin antecedentes registrados.';
+
+    var av = [];
+    if (String(ld.noContactar || '').match(/^s/i)) av.push('Este lead pidió no ser contactado. No le marques.');
+    if (!ld.nombre) av.push('No tenemos su nombre. Pregúntalo en la apertura y captúralo arriba.');
+    if (String(ld.requiereRevision || '').match(/^s/i) && ld.motivoRevision) av.push('Marcado para revisión: ' + ld.motivoRevision);
+    $('#ante-aviso').hidden = !av.length;
+    $('#ante-aviso').textContent = av.join(' ');
+    $('#llamada-sub').textContent = (ld.nombre || ld.telefono || ld.id) + (ld.anio ? ' · informes ' + ld.anio : '');
+  }
+
+  /* ---------------- etapas ---------------- */
+  function abrirEtapa(n) {
+    $$('.etapa[data-etapa]').forEach(function (et) {
+      var i = +et.getAttribute('data-etapa'), body = $('#eb' + i);
+      if (!body) return;
+      if (i === n) { et.setAttribute('data-state', 'activa'); body.hidden = false; }
+      else {
+        body.hidden = true;
+        if (et.getAttribute('data-state') === 'activa') et.setAttribute('data-state', 'pendiente');
+      }
+    });
+  }
+  function marcar(n, estado) {
+    var et = $('.etapa[data-etapa="' + n + '"]');
+    if (et) et.setAttribute('data-state', estado || 'hecha');
+  }
+  function omitir(lista) { lista.forEach(function (n) { marcar(n, 'omitida'); }); }
+  function reactivar(lista) {
+    lista.forEach(function (n) {
+      var et = $('.etapa[data-etapa="' + n + '"]');
+      if (et && et.getAttribute('data-state') === 'omitida') et.setAttribute('data-state', 'pendiente');
+    });
+  }
+
+  $$('.eh[data-abrir]').forEach(function (b) {
+    b.addEventListener('click', function () { abrirEtapa(+b.getAttribute('data-abrir')); });
+  });
+  $$('[data-ir]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var n = +b.getAttribute('data-ir');
+      for (var i = 1; i < n; i++) {
+        var et = $('.etapa[data-etapa="' + i + '"]');
+        if (et && et.getAttribute('data-state') !== 'omitida') marcar(i, 'hecha');
+      }
+      abrirEtapa(n); pintar();
+    });
+  });
+
+  /* ---------------- campos de texto ---------------- */
+  var MAPA = {
+    'f-reag-fecha':'reagendaFecha', 'f-reag-hora':'reagendaHora',
+    'f-motivo':'motivoHistorico', 'f-detalle-cambio':'detalleCambio',
+    'f-zona':'zonaBuscada', 'f-info-faltante':'infoFaltante',
+    'f-renta-monto':'rentaMonto', 'f-plazo':'plazo',
+    'f-alt1':'alt1', 'f-alt2':'alt2', 'f-cita-fecha':'citaFecha', 'f-cita-hora':'citaHora', 'f-asesor':'asesor',
+    'f-prox-accion':'proximaAccion', 'f-prox-fecha':'proximaFecha', 'f-resumen':'resumen'
+  };
+  var ID_DE = {};
+  Object.keys(MAPA).forEach(function (id) { ID_DE[MAPA[id]] = id; });
+  Object.keys(MAPA).forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', function () { S[MAPA[id]] = el.value; pintar(); });
+  });
+
+  /* ---------------- opciones ---------------- */
+  $$('.opts[data-campo]').forEach(function (g) {
+    var campo = g.getAttribute('data-campo');
+    g.addEventListener('click', function (e) {
+      var b = e.target.closest('.opt'); if (!b) return;
+      var v = b.getAttribute('data-val');
+      S[campo] = (S[campo] === v) ? '' : v;
+      limpiarDependientes(campo);
+      avanzar(campo);
+      pintar();
+    });
+  });
+
+  /* Orden real de la conversación. Cambiar una respuesta borra todas las
+     que vienen después: si no, quedan vivas en memoria aunque la pantalla
+     ya no las muestre, y se guardan en la hoja. */
+  var NIVELES = [
+    ['resultado'],
+    ['reagendaFecha','reagendaHora','recuerda'],
+    ['situacion'],
+    ['yaNoNecesita','buscaOtra'],
+    ['motivoCategoria','motivoHistorico'],
+    ['motivoVigente','detalleCambio','cotiza','precioFoco','zonaBuscada','decisionPareja','documentosPendientes','infoFaltante'],
+    ['intencion'],
+    ['prioridad','vivienda','rentaIntencion','rentaMonto','plazo','aceptaSeguimiento','noContactar'],
+    ['aceptaCita'],
+    ['alt1','alt2','citaFecha','citaHora','whatsappOk','viaSinCita'],
+    ['temaInfo','autorizaEnvio','proximaAccion','proximaFecha']
+  ];
+  /* Cambios que además borran campos de su propio nivel. */
+  var TAMBIEN = {
+    vivienda:['rentaIntencion','rentaMonto'],
+    viaSinCita:['temaInfo','autorizaEnvio','proximaAccion','proximaFecha'],
+    motivoCategoria:['cotiza','precioFoco','zonaBuscada','decisionPareja','documentosPendientes','infoFaltante']
+  };
+  var sugerenciaPrevia = '';
+
+  function limpiarDependientes(campo) {
+    var nivel = -1;
+    for (var i = 0; i < NIVELES.length; i++) if (NIVELES[i].indexOf(campo) > -1) { nivel = i; break; }
+    if (nivel < 0) return;
+    var borrar = [];
+    for (var j = nivel + 1; j < NIVELES.length; j++) borrar = borrar.concat(NIVELES[j]);
+    if (TAMBIEN[campo]) borrar = borrar.concat(TAMBIEN[campo]);
+    borrar.forEach(function (k) {
+      if (k === campo) return;
+      S[k] = '';
+      var id = ID_DE[k];
+      var el = id && document.getElementById(id);
+      if (el) el.value = '';
+    });
+    /* Las notas sugeridas se vuelven mentira al cambiar una respuesta. */
+    if (S.resumen && S.resumen === sugerenciaPrevia) {
+      S.resumen = ''; sugerenciaPrevia = '';
+      var t = document.getElementById('f-resumen'); if (t) t.value = '';
+    }
+  }
+
+  /** Marca qué etapas quedan fuera y solo avanza cuando hay algo más que
+      preguntar. Nunca cierra la etapa abierta: esconder una pregunta que
+      el agente todavía no contesta es peor que no avanzar. */
+  function avanzar(campo) {
+    if (campo === 'resultado') {
+      if (S.resultado === 'contactado') { reactivar([2,3,4,5,6]); }
+      else if (S.resultado) { marcar(1, 'hecha'); omitir([2,3,4,5]); reactivar([6]); }
+    }
+    if (campo === 'recuerda') {
+      if (S.recuerda === 'niega') { omitir([2,3,4,5]); reactivar([6]); }
+      else if (S.recuerda) { reactivar([2,3,4,5,6]); marcar(1, 'hecha'); }
+    }
+    if (campo === 'situacion') {
+      if (S.situacion === 'ya_compro') { omitir([3]); reactivar([4]); }
+      else if (S.situacion === 'sigue_buscando') { reactivar([3,4,5,6]); }
+    }
+    if (campo === 'yaNoNecesita') {
+      if (S.yaNoNecesita === 'si') { marcar(2, 'hecha'); omitir([3,4,5]); reactivar([6]); }
+      else if (S.yaNoNecesita === 'no') { reactivar([4]); }
+    }
+    if (campo === 'buscaOtra') {
+      if (S.buscaOtra === 'si') { marcar(2, 'hecha'); omitir([3]); reactivar([4,5,6]); abrirEtapa(4); }
+      else if (S.buscaOtra === 'no') { marcar(2, 'hecha'); omitir([3,4,5]); reactivar([6]); }
+    }
+    if (campo === 'motivoVigente' && S.motivoVigente) { marcar(3, 'hecha'); }
+    if (campo === 'intencion') {
+      if (S.intencion === 'no') { omitir([5]); reactivar([6]); }
+      else if (S.intencion) { reactivar([5,6]); }
+    }
+    if (campo === 'noContactar' && S.noContactar) { marcar(4, 'hecha'); abrirEtapa(6); }
+    if (campo === 'aceptaCita' && S.aceptaCita) { marcar(5, 'hecha'); }
+    if ((campo === 'whatsappOk' && S.whatsappOk) || (campo === 'autorizaEnvio' && S.autorizaEnvio)) {
+      marcar(5, 'hecha'); abrirEtapa(6);
+    }
+  }
+
+  /* ---------------- chips de motivo ---------------- */
+  var chipsMotivo = $('#chips-motivo');
+  R.MOTIVOS.forEach(function (m) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.textContent = m.cat;
+    b.addEventListener('click', function () {
+      S.motivoCategoria = (S.motivoCategoria === m.cat) ? '' : m.cat;
+      limpiarDependientes('motivoCategoria');
+      pintar();
+    });
+    chipsMotivo.appendChild(b);
+  });
+
+  /* ---------------- objeciones ---------------- */
+  var contObj = $('#lista-objeciones');
+  R.OBJECIONES.forEach(function (o) {
+    var card = document.createElement('div');
+    card.className = 'objcard-o';
+    card.style.cssText = 'border:1px solid var(--line);border-radius:8px;padding:.65rem .75rem;background:var(--sunk);margin-bottom:.5rem';
+    var h = document.createElement('h4');
+    h.style.cssText = 'font-size:13px;margin-bottom:.35rem';
+    h.textContent = '«' + o.t + '»';
+    var p = document.createElement('p');
+    p.className = 'resp-' + o.id;
+    p.style.cssText = 'font-size:13.5px;line-height:1.5';
+    var fila = document.createElement('div');
+    fila.className = 'row'; fila.style.marginTop = '.4rem';
+    var btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'btn sm ghost'; btn.textContent = 'La usé';
+    btn.addEventListener('click', function () {
+      var i = S.objeciones.indexOf(o.t);
+      if (i > -1) S.objeciones.splice(i, 1); else S.objeciones.push(o.t);
+      btn.textContent = S.objeciones.indexOf(o.t) > -1 ? '✓ Registrada' : 'La usé';
+      pintar();
+    });
+    fila.appendChild(btn);
+    card.appendChild(h); card.appendChild(p);
+    if (o.n) {
+      var n = document.createElement('p'); n.className = 'nota'; n.style.marginTop = '.3rem'; n.textContent = o.n;
+      card.appendChild(n);
+    }
+    card.appendChild(fila);
+    contObj.appendChild(card);
+  });
+
+  $('#btn-sugerir').addEventListener('click', function () {
+    var t = R.resumenSugerido(S);
+    if (!t) { toast('Captura algo de la conversación primero.', true); return; }
+    $('#f-resumen').value = t; S.resumen = t; sugerenciaPrevia = t; pintar();
+  });
+
+  /* ---------------- copiar ---------------- */
+  $$('[data-copiar]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var el = document.getElementById(b.getAttribute('data-copiar'));
+      if (!el || !el.textContent.trim()) { toast('Nada que copiar todavía.', true); return; }
+      function seleccionar() {
+        try {
+          var r = document.createRange(); r.selectNodeContents(el);
+          var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+          toast('Seleccionado: copia con Ctrl o Cmd + C');
+        } catch (e) { toast('Copia el texto manualmente.', true); }
+      }
+      try { navigator.clipboard.writeText(el.textContent).then(function () { toast('Copiado'); }, seleccionar); }
+      catch (e) { seleccionar(); }
+    });
+  });
+
+  /* ---------------- pintado ---------------- */
+  function ver(id, cond) { var el = document.getElementById(id); if (el) el.hidden = !cond; }
+
+  function pintar() {
+    /* botones de opción */
+    $$('.opts[data-campo]').forEach(function (g) {
+      var campo = g.getAttribute('data-campo');
+      Array.prototype.forEach.call(g.children, function (c) {
+        c.setAttribute('aria-pressed', c.getAttribute('data-val') === S[campo] ? 'true' : 'false');
+      });
+    });
+    Array.prototype.forEach.call(chipsMotivo.children, function (c) {
+      c.setAttribute('aria-pressed', c.textContent === S.motivoCategoria ? 'true' : 'false');
+    });
+
+    /* guiones */
+    var ap = R.guionApertura(S);
+    $('#say-apertura').innerHTML = '<span class="tag">Agente</span>' + ap.html +
+      (ap.alterno ? '<span class="alt">' + ap.alterno + '</span>' : '');
+    $('#hint1').textContent = S.nombre ? R.nombreCorto(S.nombre) : (S.telefono || '');
+    $('#say-norecuerda').innerHTML = '<span class="tag">Agente</span>' + R.guionNoRecuerda(S);
+    $('#msg-intento').textContent = R.msgIntento(S);
+    $('#say-cita').innerHTML = '<span class="tag">Agente</span>' + R.guionCita(S);
+    $('#say-horarios').innerHTML = '<span class="tag">Agente</span>' + R.guionHorarios(S);
+    var conf = R.guionConfirma(S);
+    ver('say-confirma', !!conf);
+    if (conf) $('#say-confirma').innerHTML = '<span class="tag">Confirma en voz alta</span>' + conf;
+    $('#say-cierre').innerHTML = '<span class="tag">Agente</span>' + R.guionCierre(S);
+
+    /* pregunta condicional de la etapa 3 */
+    var m = R.motivoDe(S.motivoCategoria);
+    $('#hint3').textContent = S.motivoCategoria || '';
+    ver('caja-condicional', !!S.motivoVigente);
+    if (m && m.pregunta) {
+      $('#say-condicional').innerHTML = '<span class="tag">Pregunta que corresponde al motivo</span>' + R.esc(m.pregunta);
+      $('#say-condicional').hidden = false;
+    } else {
+      $('#say-condicional').hidden = true;
+    }
+    ver('cond-credito',    S.motivoCategoria === 'Crédito');
+    ver('cond-precio',     S.motivoCategoria === 'Precio');
+    ver('cond-ubicacion',  S.motivoCategoria === 'Ubicación');
+    ver('cond-pareja',     S.motivoCategoria === 'Pareja o familia');
+    ver('cond-documentos', S.motivoCategoria === 'Documentos');
+    ver('cond-info',       S.motivoCategoria === 'Falta de seguimiento');
+    $('#nota-cotiza').textContent = { si:'Cotiza. Puedes avanzar con normalidad.',
+      no:'No cotiza. Regístralo y ofrece consultar qué alternativas podrían aplicar, sin asegurarle que califica.',
+      nose:'No sabe. Oriéntale para que lo verifique antes de dar nada por hecho.' }[S.cotiza] || '';
+
+    /* visibilidad de todas las ramas, calculada del estado */
+    ver('caja-reagendar',  S.resultado === 'reagendar');
+    ver('caja-nocontesto', S.resultado === 'no_contesto');
+    ver('caja-recuerda',   S.resultado === 'contactado');
+    ver('say-niega',       S.recuerda === 'niega');
+    ver('nota-niega',      S.recuerda === 'niega');
+    ver('row-ir-2',        S.resultado === 'contactado' && (S.recuerda === 'si' || S.recuerda === 'no'));
+    $('#say-norecuerda').hidden = S.recuerda !== 'no';
+
+    ver('caja-compro',        S.situacion === 'ya_compro');
+    ver('caja-otra-vivienda', S.situacion === 'ya_compro' && S.yaNoNecesita === 'no');
+    ver('caja-motivo',        S.situacion === 'sigue_buscando');
+    $('#nota-compro').textContent = S.yaNoNecesita === 'si'
+      ? 'Agradece, actualiza el registro y cierra la llamada.'
+      : (S.buscaOtra === 'si' ? 'Sí hay oportunidad: pasa a confirmar su interés.' : '');
+
+    var interesado = S.intencion === 'sigue' || S.intencion === 'despues';
+    ver('caja-sigue',     S.intencion === 'sigue');
+    ver('caja-vivienda',  interesado);
+    ver('caja-renta',     S.vivienda === 'renta');
+    ver('caja-despues',   S.intencion === 'despues');
+    ver('caja-nointeres', S.intencion === 'no');
+    ver('row-ir-5',       interesado);
+
+    var pidioInfo = S.aceptaCita === 'solo_info' || (S.aceptaCita === 'no' && S.viaSinCita === 'info');
+    ver('caja-cita',    S.aceptaCita === 'si');
+    ver('caja-sincita', S.aceptaCita === 'no');
+    ver('caja-info',    pidioInfo);
+    ver('caja-prox',    (S.aceptaCita === 'no' && S.viaSinCita === 'otra_fecha') ||
+                        (S.intencion === 'despues' && S.aceptaSeguimiento === 'si') ||
+                        S.aceptaCita === 'solo_info');
+
+    /* WhatsApp: plantilla A o B */
+    var wa = R.msgCita(S), wb = R.msgInfo(S);
+    var texto = wa || wb;
+    ver('caja-wa', !!texto);
+    $('#lb-wa').textContent = wa ? 'Mensaje de WhatsApp · cita confirmada' : 'Mensaje de WhatsApp · información solicitada';
+    $('#msg-wa').textContent = texto;
+
+    /* objeciones con texto dinámico */
+    var elOrigen = document.querySelector('.resp-minumero');
+    if (elOrigen) elOrigen.textContent = R.respuestaOrigen(S);
+    R.OBJECIONES.forEach(function (o) {
+      if (o.id === 'minumero') return;
+      var el = document.querySelector('.resp-' + o.id);
+      if (el) el.textContent = o.r;
+    });
+
+    /* clasificación */
+    var c = R.clasificar(S);
+    var bd = $('#clas-badge');
+    bd.className = 'badge b-' + c;
+    bd.textContent = R.ETIQ_CLAS[c];
+    $('#clas-texto').textContent = S.idLead ? R.razonClasificacion(S)
+      : 'Abre un lead para empezar. La clasificación sale de su interés actual y del siguiente paso acordado.';
+
+    /* Fin de la llamada: dicho con todas sus letras, no en letra chica. */
+    var fin = R.estadoFinal(S);
+    ver('fin-llamada', !!fin);
+    if (fin) { $('#fin-titulo').textContent = fin.titulo; $('#fin-detalle').textContent = fin.detalle; }
+
+    pintarFicha();
+    $('#btn-guardar').disabled = !(S.idLead && S.resultado) || guardando;
+  }
+
+  function pintarFicha() {
+    var cont = $('#ficha'); cont.innerHTML = '';
+    R.ficha(S).forEach(function (b) {
+      var d = document.createElement('div'); d.className = 'bloque';
+      var h = document.createElement('h4'); h.textContent = b.titulo; d.appendChild(h);
+      var dl = document.createElement('dl');
+      b.campos.forEach(function (f) {
+        if (f.estado === 'vacio' && !S.idLead) return;
+        var row = document.createElement('div');
+        row.className = 'f' + (f.estado === 'vacio' ? ' vacio' : (f.estado === 'pend' ? ' pend' : ''));
+        var dt = document.createElement('dt'); dt.textContent = f.label;
+        var dd = document.createElement('dd');
+        dd.textContent = f.estado === 'vacio' ? 'No preguntado'
+          : (f.estado === 'pend' && f.valor ? f.valor + ' · por verificar' : f.valor);
+        row.appendChild(dt); row.appendChild(dd); dl.appendChild(row);
+      });
+      d.appendChild(dl); cont.appendChild(d);
+    });
+    $('#ficha-texto').textContent = S.idLead ? R.fichaTexto(S) : 'Abre un lead para generar su ficha.';
+  }
+
+  /* ---------------- limpiar ---------------- */
+  function limpiarLlamada(conservaLead) {
+    var quien = S.quien;
+    S = estadoVacio();
+    S.quien = quien;
+    Object.keys(MAPA).forEach(function (id) {
+      var el = document.getElementById(id); if (el) el.value = '';
+    });
+    $$('.etapa[data-etapa]').forEach(function (et) { et.setAttribute('data-state', 'pendiente'); });
+    $$('.eb').forEach(function (b) { if (b.id) b.hidden = true; });
+    $$('#lista-objeciones .btn').forEach(function (b) { b.textContent = 'La usé'; });
+    $('#estado-guardado').textContent = '';
+    sugerenciaPrevia = '';
+    var bc = document.getElementById('btn-limpiar');
+    if (bc) bc.textContent = 'Cancelar sin guardar';
+    if (!conservaLead) {
+      leadActual = null; token = '';
+      $('#ante').hidden = true;
+      $('#llamada-sub').textContent = 'Selecciona un lead';
+      pintarLista();
+    }
+    pintar();
+  }
+  var cancelArmado = false, cancelT = null;
+  $('#btn-limpiar').addEventListener('click', function () {
+    if (guardando) return;
+    var b = $('#btn-limpiar');
+    var hayAlgo = S.idLead && (S.resultado || S.resumen);
+    if (hayAlgo && !cancelArmado) {
+      cancelArmado = true;
+      b.textContent = '¿Borrar sin guardar?';
+      clearTimeout(cancelT);
+      cancelT = setTimeout(function () { cancelArmado = false; b.textContent = 'Cancelar sin guardar'; }, 4000);
+      return;
+    }
+    cancelArmado = false; clearTimeout(cancelT); b.textContent = 'Cancelar sin guardar';
+    limpiarLlamada(false);
+    toast('Se descartó, no se guardó nada');
+  });
+
+  /* ---------------- guardar ---------------- */
+  $('#btn-guardar').addEventListener('click', function () {
+    if (guardando || !S.idLead) return;
+    if (!S.resultado) { toast('Marca primero qué pasó al llamar.', true); return; }
+    if (!token) token = nuevoToken();
+
+    guardando = true;
+    $('#btn-guardar').disabled = true;
+    $('#estado-guardado').textContent = 'Guardando…';
+    conn('wait', 'Guardando…');
+
+    /* Segunda red: se guarda lo normalizado, nunca el estado crudo. */
+    var N = R.normalizar(S);
+    var datos = {};
+    Object.keys(N).forEach(function (k) { datos[k] = N[k]; });
+    datos.oportunidad  = R.clasificar(S);
+    datos.clasificacionTexto = R.ETIQ_CLAS[datos.oportunidad];
+    datos.obstaculoActual = R.obstaculoActual(S);
+    datos.objeciones   = (S.objeciones || []).join('; ');
+    datos.noContactar  = N.noContactar === 'si';
+    datos.whatsappOk   = N.whatsappOk === 'si';
+    datos.autorizaEnvio = N.autorizaEnvio === 'si';
+    datos.requiereRevision = N.recuerda === 'niega';
+    datos.motivoRevision = N.recuerda === 'niega' ? 'Niega haber solicitado informes (recontacto telefónico)' : '';
+
+    api({ accion:'guardar', id:S.idLead, token:token, datos:datos }).then(function (d) {
+      conn('on', 'Conectado');
+      if (d.duplicado) {
+        $('#estado-guardado').textContent = 'Ya estaba guardada, no se duplicó.';
+        toast('Esta llamada ya estaba guardada');
+      } else {
+        $('#estado-guardado').textContent = 'Guardado en la fila ' + d.fila + ' · ' + d.clasificacion + ' / ' + d.estatus;
+        toast('Guardado en la hoja');
+      }
+      for (var i = 0; i < leads.length; i++) {
+        if (leads[i].id === S.idLead) {
+          leads[i].oportunidad = datos.oportunidad;
+          leads[i].clasificacion = d.clasificacion;
+          leads[i].asesor = S.asesor || leads[i].asesor;
+          if (S.nombre) leads[i].nombre = S.nombre;
+          break;
+        }
+      }
+      pintarLista();
+      guardando = false; token = '';
+      setTimeout(function () { limpiarLlamada(false); }, 900);
+    }).catch(function (e) {
+      guardando = false;
+      conn('off', 'Sin conexión');
+      $('#estado-guardado').textContent = 'No se guardó.';
+      $('#btn-guardar').disabled = false;
+      toast('No se guardó: ' + e.message, true);
+    });
+  });
+
+  pintar();
+  if (urlApi) probarConexion().then(function (ok) { if (ok) cargarCola(false); });
+})();
+</script>
+</body>
+</html>
